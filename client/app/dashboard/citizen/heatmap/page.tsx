@@ -227,7 +227,7 @@ export default function CitizenHeatmapPage() {
 
     // Remove old heatmap
     if (heatmapRef.current) {
-      heatmapRef.current.setMap(null);
+(heatmapRef.current as any).setMap(null);
       heatmapRef.current = null;
     }
 
@@ -243,7 +243,8 @@ export default function CitizenHeatmapPage() {
         )
     );
 
-    heatmapRef.current = new window.google.maps.visualization.HeatmapLayer({
+heatmapRef.current =
+  new (window.google.maps.visualization.HeatmapLayer as any)({
       data: heatmapData,
       map,
       radius: 35,

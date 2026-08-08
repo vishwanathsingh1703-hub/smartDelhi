@@ -96,3 +96,43 @@ model Notification {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model Vehicle {
+  id          String  @id @default(cuid())
+  vehicleNo   String  @unique
+  type        String  @default("Garbage Truck")
+  ward        String?
+  status      String  @default("AVAILABLE")
+  driverName  String?
+  driverPhone String?
+  latitude    Float?
+  longitude   Float?
+  isActive    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Ward {
+  id     String  @id @default(cuid())
+  number Int     @unique
+  name   String
+  zone   String?
+
+  // Demographic data
+  population Int?
+  households Int?
+
+  // Ward importance / infrastructure
+  importanceScore     Float @default(1)
+  infrastructureScore Float @default(1)
+
+  // Budget
+  budget      Float @default(0)
+  spentBudget Float @default(0)
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
