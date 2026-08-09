@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { getSessionUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import CitizenStats from '@/components/citizen/CitizenStats';
-
+import CitizenHeatmapBlock from '@/components/citizen/CitizenHeatmapBlock';
 import {
   FileText,
   PlusCircle,
@@ -396,6 +396,9 @@ export default async function CitizenDashboardPage() {
               </div>
             )}
           </div>
+
+          {/* ================= CIVIC ISSUE HEATMAP BLOCK ================= */}
+          <CitizenHeatmapBlock />
         </main>
       </div>
     </div>

@@ -12,7 +12,7 @@ import {
 
 import { getSessionUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-
+import ComplaintFilters from "./ComplaintFilters";
 const statusStyles: Record<string, string> = {
   PENDING:
     'bg-amber-500/10 border-amber-500/30 text-amber-400',
@@ -173,88 +173,7 @@ export default async function MyComplaintsPage() {
           </div>
         ) : (
           /* COMPLAINT LIST */
-          <div className="space-y-4">
-            {complaints.map((complaint) => {
-              const statusClass =
-                statusStyles[complaint.status] ||
-                'bg-gray-500/10 border-gray-500/20 text-gray-300';
-
-              return (
-                <div
-                  key={complaint.id}
-                  className="bg-gray-950/80 backdrop-blur-xl border border-cyan-500/10 hover:border-cyan-500/30 rounded-2xl p-5 transition"
-                >
-                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-                    {/* LEFT */}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="text-base sm:text-lg font-bold text-white">
-                          {complaint.title}
-                        </h2>
-
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] uppercase font-bold tracking-wider ${statusClass}`}
-                        >
-                          {getStatusIcon(complaint.status)}
-
-                          {complaint.status.replace('_', ' ')}
-                        </span>
-                      </div>
-
-                      <p className="mt-2 text-sm text-gray-400 line-clamp-2">
-                        {complaint.description ||
-                          'No description provided.'}
-                      </p>
-
-                      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-gray-500">
-                        <span>
-                          Category:{' '}
-                          <strong className="text-gray-300">
-                            {complaint.category}
-                          </strong>
-                        </span>
-
-                        <span>
-                          Ward:{' '}
-                          <strong className="text-gray-300">
-                            {complaint.ward}
-                          </strong>
-                        </span>
-
-                        <span>
-                          Priority:{' '}
-                          <strong className="text-gray-300">
-                            {complaint.priority}
-                          </strong>
-                        </span>
-
-                        <span>
-                          {new Date(
-                            complaint.createdAt
-                          ).toLocaleDateString('en-IN', {
-                            day: '2-digit',
-                            month: 'short',
-                            year: 'numeric',
-                          })}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* RIGHT */}
-                    <div className="flex-shrink-0">
-                      <Link
-                        href={`/dashboard/citizen/complaints/${complaint.id}`}
-                        className="inline-flex items-center justify-center gap-2 w-full lg:w-auto px-4 py-2.5 rounded-xl border border-cyan-500/20 text-cyan-400 hover:text-white hover:border-cyan-400/40 hover:bg-cyan-500/10 text-xs font-semibold transition"
-                      >
-                        View Details
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+<ComplaintFilters complaints={complaints} />
         )}
       </main>
     </div>

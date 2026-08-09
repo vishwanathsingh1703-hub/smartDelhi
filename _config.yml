@@ -1,0 +1,6 @@
+# Jekyll ko node_modules aur sensitive folders ignore karne ke liye instruct karein
+exclude:
+  - node_modules/
+  - server/node_modules/
+  - client/node_modules/
+  - .github/

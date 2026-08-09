@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -10,6 +10,8 @@ import {
   FileText,
   AlertCircle,
   CheckCircle2,
+  Navigation,
+  Loader2,
 } from 'lucide-react';
 
 const categories = [
@@ -23,6 +25,8 @@ const categories = [
   'Other',
 ];
 
+const DEFAULT_CENTER = { lat: 28.6139, lng: 77.2090 }; // Delhi Center
+
 export default function NewComplaintPage() {
   const router = useRouter();
 
@@ -34,11 +38,148 @@ export default function NewComplaintPage() {
 
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
+  const [address, setAddress] = useState('');
 
   const [loading, setLoading] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
+  // Map Refs
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const mapInstanceRef = useRef<any>(null);
+  const markerRef = useRef<any>(null);
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  /*
+   * =====================================================
+   * REVERSE GEOCODING (LAT/LNG -> ADDRESS & WARD)
+   * =====================================================
+   */
+  const reverseGeocode = async (lat: number, lng: number) => {
+    try {
+      setGeocoding(true);
+      setLatitude(lat.toFixed(6));
+      setLongitude(lng.toFixed(6));
+
+      if (!apiKey) return;
+
+      const res = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`
+      );
+      const data = await res.json();
+
+      if (data.status === 'OK' && data.results && data.results.length > 0) {
+        const firstResult = data.results[0];
+        setAddress(firstResult.formatted_address || '');
+
+        // Auto-extract Ward/Area if not manually filled
+        let detectedWard = '';
+        firstResult.address_components.forEach((comp: any) => {
+          if (
+            comp.types.includes('sublocality') ||
+            comp.types.includes('sublocality_level_1')
+          ) {
+            detectedWard = comp.long_name;
+          }
+          if (comp.long_name.toLowerCase().includes('ward')) {
+            detectedWard = comp.long_name;
+          }
+        });
+
+        if (detectedWard && !ward) {
+          setWard(detectedWard);
+        }
+      }
+    } catch (err) {
+      console.error('Reverse Geocoding Error:', err);
+    } finally {
+      setGeocoding(false);
+    }
+  };
+
+  /*
+   * =====================================================
+   * INITIALIZE PIN DROP MAP
+   * =====================================================
+   */
+  useEffect(() => {
+    if (!apiKey || !mapRef.current || mapInstanceRef.current || !window.google?.maps) return;
+
+    const map = new window.google.maps.Map(mapRef.current, {
+      center: DEFAULT_CENTER,
+      zoom: 12,
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: false,
+    });
+
+    mapInstanceRef.current = map;
+
+    const marker = new window.google.maps.Marker({
+      position: DEFAULT_CENTER,
+      map: map,
+      draggable: true,
+      title: 'Drag me to set complaint location',
+    });
+
+    markerRef.current = marker;
+
+    // Drag marker event
+    marker.addListener('dragend', () => {
+      const pos = marker.getPosition();
+      if (pos) {
+        reverseGeocode(pos.lat(), pos.lng());
+      }
+    });
+
+    // Map click event
+    map.addListener('click', (e: any) => {
+      const clickedLat = e.latLng.lat();
+      const clickedLng = e.latLng.lng();
+      marker.setPosition({ lat: clickedLat, lng: clickedLng });
+      reverseGeocode(clickedLat, clickedLng);
+    });
+  }, [apiKey]);
+
+  // Current GPS Location Button
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setError('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    setGeocoding(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const currentPos = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        };
+
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.panTo(currentPos);
+          mapInstanceRef.current.setZoom(16);
+        }
+        if (markerRef.current) {
+          markerRef.current.setPosition(currentPos);
+        }
+
+        reverseGeocode(currentPos.lat, currentPos.lng);
+      },
+      () => {
+        setError('Unable to fetch your current GPS location.');
+        setGeocoding(false);
+      },
+      { enableHighAccuracy: true }
+    );
+  };
+
+  /*
+   * =====================================================
+   * SUBMIT COMPLAINT
+   * =====================================================
+   */
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -67,8 +208,9 @@ export default function NewComplaintPage() {
           category,
           ward: ward.trim(),
           priority,
-          latitude: latitude.trim() || null,
-          longitude: longitude.trim() || null,
+          latitude: latitude.trim() ? parseFloat(latitude) : null,
+          longitude: longitude.trim() ? parseFloat(longitude) : null,
+          address: address.trim() || null,
         }),
       });
 
@@ -278,22 +420,51 @@ export default function NewComplaintPage() {
               </div>
             </div>
 
-            {/* Location */}
-            <div className="border-t border-white/10 pt-5">
-              <div className="flex items-center gap-2 mb-3">
-                <MapPin className="w-4 h-4 text-cyan-400" />
-
-                <div>
-                  <p className="text-xs font-semibold text-gray-300">
-                    Location
-                  </p>
-
-                  <p className="text-[10px] text-gray-500">
-                    Optional — you can add coordinates later.
-                  </p>
+            {/* Location Section (Map + Inputs) */}
+            <div className="border-t border-white/10 pt-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-cyan-400" />
+                  <div>
+                    <p className="text-xs font-semibold text-gray-300">
+                      Location & Interactive Pin Drop
+                    </p>
+                    <p className="text-[10px] text-gray-500">
+                      Click or drag pin on map to auto-fill address and coordinates.
+                    </p>
+                  </div>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={handleUseCurrentLocation}
+                  className="inline-flex items-center gap-1 text-[11px] bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 text-blue-300 px-3 py-1.5 rounded-lg transition"
+                >
+                  <Navigation className="w-3 h-3" />
+                  GPS Location
+                </button>
               </div>
 
+              {/* Pin Drop Map */}
+              <div className="relative overflow-hidden rounded-2xl border border-cyan-500/30 bg-black/60 shadow-inner">
+                {geocoding && (
+                  <div className="absolute top-3 right-3 z-10 bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-xl text-xs text-cyan-300 flex items-center gap-2 border border-cyan-500/30">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Detecting Address...
+                  </div>
+                )}
+                <div ref={mapRef} className="w-full h-56" />
+              </div>
+
+              {/* Detected Address Display */}
+              {address && (
+                <div className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-xs text-cyan-200">
+                  <span className="font-semibold">Detected Address: </span>
+                  {address}
+                </div>
+              )}
+
+              {/* Manual Lat / Lng Inputs (Preserved as requested) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Latitude */}
                 <div>
