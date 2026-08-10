@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import SmartDelhiAI from "@/components/citizen/SmartDelhiAI";
 import { getSessionUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import CitizenStats from '@/components/citizen/CitizenStats';
@@ -401,6 +402,7 @@ export default async function CitizenDashboardPage() {
           <CitizenHeatmapBlock />
         </main>
       </div>
+      <SmartDelhiAI />
     </div>
   );
 }

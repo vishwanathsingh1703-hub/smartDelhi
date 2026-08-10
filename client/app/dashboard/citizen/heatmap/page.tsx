@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 import {
@@ -14,9 +14,18 @@ import {
   Navigation,
   RefreshCw,
   AlertTriangle,
-  Filter,
-  X,
 } from "lucide-react";
+
+type HeatmapComplaint = {
+  id: string;
+  title?: string | null;
+  category?: string | null;
+  ward?: string | null;
+  status?: string | null;
+  latitude: number | null;
+  longitude: number | null;
+};
+
 
 declare global {
   interface Window {
@@ -34,130 +43,76 @@ interface ComplaintLocation {
   ward: string;
   latitude: number;
   longitude: number;
-  userId?: string;
 }
 
-type FilterCategory =
-  | "ALL"
-  | "GARBAGE"
-  | "ROAD"
-  | "SEWAGE"
-  | "WATER"
-  | "ELECTRICITY"
-  | "CLEANLINESS";
+interface GoogleMapInstance {
+  panTo: (position: {
+    lat: number;
+    lng: number;
+  }) => void;
 
-type ViewFilter = "ALL" | "MINE";
+  setZoom: (zoom: number) => void;
+
+  fitBounds: (bounds: any) => void;
+}
+
+interface GoogleCircleInstance {
+  setMap: (map: any) => void;
+
+  addListener: (
+    eventName: string,
+    handler: () => void
+  ) => void;
+}
+
+interface GoogleMarkerInstance {
+  map: any;
+
+  addListener: (
+    eventName: string,
+    handler: () => void
+  ) => void;
+}
 
 const DEFAULT_CENTER = {
   lat: 28.6139,
-  lng: 77.209,
+  lng: 77.2090,
 };
 
-const CATEGORY_OPTIONS: {
-  value: FilterCategory;
-  label: string;
-}[] = [
-  { value: "ALL", label: "All Issues" },
-  { value: "GARBAGE", label: "Garbage" },
-  { value: "ROAD", label: "Road" },
-  { value: "SEWAGE", label: "Sewage" },
-  { value: "WATER", label: "Water" },
-  { value: "ELECTRICITY", label: "Electricity" },
-  { value: "CLEANLINESS", label: "Cleanliness" },
-];
-
 export default function CitizenHeatmapPage() {
-  const mapRef = useRef<HTMLDivElement | null>(null);
+  const mapRef =
+    useRef<HTMLDivElement | null>(null);
 
-  const mapInstanceRef = useRef<any>(null);
+  const mapInstanceRef =
+    useRef<GoogleMapInstance | null>(null);
 
-  const markersRef = useRef<any[]>([]);
+  const markersRef =
+    useRef<GoogleMarkerInstance[]>([]);
 
-  const circlesRef = useRef<any[]>([]);
+  const circlesRef =
+    useRef<GoogleCircleInstance[]>([]);
 
-  const myLocationMarkerRef = useRef<any>(null);
+  const [complaints, setComplaints] =
+    useState<ComplaintLocation[]>([]);
 
-  const [complaints, setComplaints] = useState<
-    ComplaintLocation[]
-  >([]);
+  const [loading, setLoading] =
+    useState<boolean>(true);
 
-  const [loading, setLoading] = useState(true);
+  const [mapLoading, setMapLoading] =
+    useState<boolean>(true);
 
-  const [mapLoading, setMapLoading] = useState(true);
-
-  const [error, setError] = useState<string | null>(
-    null
-  );
+  const [error, setError] =
+    useState<string | null>(null);
 
   const [selectedComplaint, setSelectedComplaint] =
     useState<ComplaintLocation | null>(null);
-
-  const [categoryFilter, setCategoryFilter] =
-    useState<FilterCategory>("ALL");
-
-  const [viewFilter, setViewFilter] =
-    useState<ViewFilter>("ALL");
-
-  const [currentUserId, setCurrentUserId] =
-    useState<string | null>(null);
-
-  const [locationLoading, setLocationLoading] =
-    useState(false);
 
   const apiKey =
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   /*
    * =====================================================
-   * LOAD CURRENT USER
-   * =====================================================
-   */
-
-  useEffect(() => {
-    const loadCurrentUser = async () => {
-      try {
-        /*
-         * Try the common session endpoint.
-         * If your project exposes user data differently,
-         * the heatmap still works for ALL complaints.
-         */
-
-        const response = await fetch(
-          "/api/auth/me",
-          {
-            method: "GET",
-            cache: "no-store",
-          }
-        );
-
-        if (!response.ok) {
-          return;
-        }
-
-        const data = await response.json();
-
-        const user =
-          data?.user || data;
-
-        if (user?.id) {
-          setCurrentUserId(
-            String(user.id)
-          );
-        }
-      } catch {
-        /*
-         * Do not break the map if the optional
-         * current-user endpoint does not exist.
-         */
-      }
-    };
-
-    loadCurrentUser();
-  }, []);
-
-  /*
-   * =====================================================
-   * LOAD GOOGLE MAPS
+   * LOAD GOOGLE MAPS API
    * =====================================================
    */
 
@@ -172,6 +127,7 @@ export default function CitizenHeatmapPage() {
       return;
     }
 
+    // Check if already fully loaded
     if (
       window.google &&
       window.google.maps
@@ -180,32 +136,25 @@ export default function CitizenHeatmapPage() {
       return;
     }
 
+    // Define global callback function
+    window.initGoogleMap = () => {
+      setMapLoading(false);
+    };
+
     const existingScript =
       document.querySelector(
         'script[data-google-maps="true"]'
       );
 
     if (existingScript) {
-      const handleLoad = () => {
+      if (
+        window.google?.maps
+      ) {
         setMapLoading(false);
-      };
+      }
 
-      existingScript.addEventListener(
-        "load",
-        handleLoad
-      );
-
-      return () => {
-        existingScript.removeEventListener(
-          "load",
-          handleLoad
-        );
-      };
+      return;
     }
-
-    window.initGoogleMap = () => {
-      setMapLoading(false);
-    };
 
     const script =
       document.createElement("script");
@@ -223,7 +172,7 @@ export default function CitizenHeatmapPage() {
       setMapLoading(false);
 
       setError(
-        "Failed to load Google Maps. Check your API key and internet connection."
+        "Failed to load Google Maps script. Check your internet connection or API key."
       );
     };
 
@@ -242,212 +191,123 @@ export default function CitizenHeatmapPage() {
    * =====================================================
    */
 
-  const fetchComplaints = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  const fetchComplaints =
+    async (): Promise<void> => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      const response =
-        await fetch(
-          "/api/complaints",
-          {
-            method: "GET",
-            cache: "no-store",
-          }
-        );
+        const response =
+          await fetch(
+            "/api/complaints",
+            {
+              method: "GET",
+              cache: "no-store",
+            }
+          );
 
-      const data =
-        await response.json();
+        const data =
+          await response.json();
 
-      if (!response.ok) {
-        throw new Error(
-          data?.error ||
-            data?.message ||
-            "Failed to load complaints"
-        );
-      }
+        if (!response.ok) {
+          throw new Error(
+            data.error ||
+              data.message ||
+              "Failed to load complaints"
+          );
+        }
 
-      const rawComplaints: unknown[] =
-        Array.isArray(data)
-          ? data
-          : Array.isArray(
-                data?.complaints
+        const rawComplaints: any[] =
+          Array.isArray(data)
+            ? data
+            : Array.isArray(
+                data.complaints
               )
             ? data.complaints
             : [];
 
-      const locations: ComplaintLocation[] =
-        rawComplaints
-          .filter(
-            (
-              item: unknown
-            ): item is Record<
-              string,
-              any
-            > => {
-              if (
-                !item ||
-                typeof item !==
-                  "object"
-              ) {
-                return false;
-              }
-
-              return (
-                item.latitude !==
+        const locations: ComplaintLocation[] =
+          rawComplaints
+            .filter(
+              (
+                complaint: any
+              ): boolean =>
+                complaint.latitude !==
                   null &&
-                item.latitude !==
+                complaint.latitude !==
                   undefined &&
-                item.longitude !==
+                complaint.longitude !==
                   null &&
-                item.longitude !==
+                complaint.longitude !==
                   undefined
-              );
-            }
-          )
-          .map(
-            (
-              complaint: Record<
-                string,
-                any
-              >
-            ): ComplaintLocation => ({
-              id: String(
-                complaint.id
-              ),
+            )
+            .map(
+              (
+                complaint: any
+              ): ComplaintLocation => ({
+                id: String(
+                  complaint.id
+                ),
 
-              title:
-                complaint.title ||
-                "Civic Complaint",
+                title:
+                  complaint.title ||
+                  "Civic Complaint",
 
-              category:
-                complaint.category ||
-                "GENERAL",
+                category:
+                  complaint.category ||
+                  "General",
 
-              status:
-                complaint.status ||
-                "PENDING",
+                status:
+                  complaint.status ||
+                  "PENDING",
 
-              priority:
-                complaint.priority ||
-                "NORMAL",
+                priority:
+                  complaint.priority ||
+                  "NORMAL",
 
-              ward:
-                complaint.ward ||
-                "Unknown",
+                ward:
+                  complaint.ward ||
+                  "Unknown",
 
-              latitude:
-                Number(
+                latitude: Number(
                   complaint.latitude
                 ),
 
-              longitude:
-                Number(
+                longitude: Number(
                   complaint.longitude
                 ),
+              })
+            )
+            .filter(
+              (
+                complaint: ComplaintLocation
+              ): boolean =>
+                Number.isFinite(
+                  complaint.latitude
+                ) &&
+                Number.isFinite(
+                  complaint.longitude
+                )
+            );
 
-              userId:
-                complaint.userId
-                  ? String(
-                      complaint.userId
-                    )
-                  : complaint.user?.id
-                    ? String(
-                        complaint.user.id
-                      )
-                    : undefined,
-            })
-          )
-          .filter(
-            (
-              complaint: ComplaintLocation
-            ) =>
-              Number.isFinite(
-                complaint.latitude
-              ) &&
-              Number.isFinite(
-                complaint.longitude
-              )
-          );
+        setComplaints(
+          locations
+        );
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Failed to load complaint locations.";
 
-      setComplaints(
-        locations
-      );
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "Failed to load complaint locations.";
-
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  };
+        setError(message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
   useEffect(() => {
     fetchComplaints();
   }, []);
-
-  /*
-   * =====================================================
-   * NORMALIZE CATEGORY
-   * =====================================================
-   */
-
-  const normalizeCategory = (
-    category: string
-  ): string => {
-    return category
-      .toUpperCase()
-      .replace(/[\s_-]+/g, "");
-  };
-
-  /*
-   * =====================================================
-   * FILTER COMPLAINTS
-   * =====================================================
-   */
-
-  const filteredComplaints =
-    useMemo(() => {
-      return complaints.filter(
-        (
-          complaint: ComplaintLocation
-        ) => {
-          const normalized =
-            normalizeCategory(
-              complaint.category
-            );
-
-          const categoryMatch =
-            categoryFilter ===
-              "ALL" ||
-            normalized.includes(
-              categoryFilter
-            );
-
-          const mineMatch =
-            viewFilter ===
-              "ALL" ||
-            Boolean(
-              currentUserId &&
-                complaint.userId ===
-                  currentUserId
-            );
-
-          return (
-            categoryMatch &&
-            mineMatch
-          );
-        }
-      );
-    }, [
-      complaints,
-      categoryFilter,
-      viewFilter,
-      currentUserId,
-    ]);
 
   /*
    * =====================================================
@@ -465,11 +325,16 @@ export default function CitizenHeatmapPage() {
       return;
     }
 
-    let cancelled = false;
+    let cancelled =
+      false;
 
     const initializeMap =
       async () => {
         try {
+          /*
+           * Dynamically load Maps library
+           */
+
           const {
             Map,
             Circle,
@@ -478,6 +343,10 @@ export default function CitizenHeatmapPage() {
             await window.google.maps.importLibrary(
               "maps"
             );
+
+          /*
+           * Load marker library
+           */
 
           const {
             AdvancedMarkerElement,
@@ -492,6 +361,10 @@ export default function CitizenHeatmapPage() {
           ) {
             return;
           }
+
+          /*
+           * Create map
+           */
 
           const map =
             new Map(
@@ -517,21 +390,36 @@ export default function CitizenHeatmapPage() {
                 gestureHandling:
                   "greedy",
 
+                /*
+                 * Google requires a Map ID
+                 * for AdvancedMarkerElement.
+                 */
+
                 mapId:
                   "SMART_DELHI_MAP",
               }
             );
 
           mapInstanceRef.current =
-            map;
+            map as GoogleMapInstance;
 
-          map.__Circle =
+          /*
+           * Save classes for later use.
+           */
+
+          (
+            map as any
+          ).__Circle =
             Circle;
 
-          map.__LatLngBounds =
+          (
+            map as any
+          ).__LatLngBounds =
             LatLngBounds;
 
-          map.__AdvancedMarkerElement =
+          (
+            map as any
+          ).__AdvancedMarkerElement =
             AdvancedMarkerElement;
         } catch (err) {
           console.error(
@@ -554,202 +442,7 @@ export default function CitizenHeatmapPage() {
 
   /*
    * =====================================================
-   * CREATE CUSTOM COMPLAINT PIN
-   * =====================================================
-   */
-
-  const createComplaintPin = (
-    complaint: ComplaintLocation
-  ) => {
-    const pin =
-      document.createElement(
-        "div"
-      );
-
-    const priority =
-      complaint.priority.toUpperCase();
-
-    let background =
-      "#3b82f6";
-
-    if (
-      priority === "HIGH" ||
-      priority === "CRITICAL"
-    ) {
-      background =
-        "#ef4444";
-    } else if (
-      priority === "MEDIUM"
-    ) {
-      background =
-        "#facc15";
-    }
-
-    pin.style.width =
-      "28px";
-
-    pin.style.height =
-      "28px";
-
-    pin.style.borderRadius =
-      "50% 50% 50% 0";
-
-    pin.style.background =
-      background;
-
-    pin.style.border =
-      "3px solid white";
-
-    pin.style.boxShadow =
-      "0 3px 12px rgba(0,0,0,0.45)";
-
-    pin.style.transform =
-      "rotate(-45deg)";
-
-    pin.style.display =
-      "flex";
-
-    pin.style.alignItems =
-      "center";
-
-    pin.style.justifyContent =
-      "center";
-
-    const inner =
-      document.createElement(
-        "div"
-      );
-
-    inner.style.width =
-      "8px";
-
-    inner.style.height =
-      "8px";
-
-    inner.style.borderRadius =
-      "50%";
-
-    inner.style.background =
-      "white";
-
-    pin.appendChild(
-      inner
-    );
-
-    return pin;
-  };
-
-  /*
-   * =====================================================
-   * CREATE CURRENT LOCATION MARKER
-   * =====================================================
-   */
-
-  const createMyLocationMarker =
-    (
-      position: {
-        lat: number;
-        lng: number;
-      }
-    ) => {
-      if (
-        !mapInstanceRef.current
-      ) {
-        return;
-      }
-
-      const map =
-        mapInstanceRef.current;
-
-      const AdvancedMarkerElement =
-        map.__AdvancedMarkerElement;
-
-      if (
-        !AdvancedMarkerElement
-      ) {
-        return;
-      }
-
-      if (
-        myLocationMarkerRef.current
-      ) {
-        myLocationMarkerRef.current.map =
-          null;
-      }
-
-      const container =
-        document.createElement(
-          "div"
-        );
-
-      container.style.width =
-        "34px";
-
-      container.style.height =
-        "34px";
-
-      container.style.borderRadius =
-        "50%";
-
-      container.style.background =
-        "rgba(37,99,235,0.18)";
-
-      container.style.border =
-        "2px solid #2563eb";
-
-      container.style.display =
-        "flex";
-
-      container.style.alignItems =
-        "center";
-
-      container.style.justifyContent =
-        "center";
-
-      container.style.boxShadow =
-        "0 0 0 6px rgba(37,99,235,0.12)";
-
-      const dot =
-        document.createElement(
-          "div"
-        );
-
-      dot.style.width =
-        "14px";
-
-      dot.style.height =
-        "14px";
-
-      dot.style.borderRadius =
-        "50%";
-
-      dot.style.background =
-        "#2563eb";
-
-      dot.style.border =
-        "3px solid white";
-
-      container.appendChild(
-        dot
-      );
-
-      myLocationMarkerRef.current =
-        new AdvancedMarkerElement({
-          map,
-
-          position,
-
-          title:
-            "Your current location",
-
-          content:
-            container,
-        });
-    };
-
-  /*
-   * =====================================================
-   * UPDATE HOTSPOTS + MARKERS
+   * UPDATE MARKERS + HOTSPOTS
    * =====================================================
    */
 
@@ -762,7 +455,11 @@ export default function CitizenHeatmapPage() {
     }
 
     const map =
-      mapInstanceRef.current;
+      mapInstanceRef.current as any;
+
+    /*
+     * Get loaded classes
+     */
 
     const Circle =
       map.__Circle;
@@ -787,7 +484,7 @@ export default function CitizenHeatmapPage() {
 
     markersRef.current.forEach(
       (
-        marker: any
+        marker: GoogleMarkerInstance
       ) => {
         marker.map = null;
       }
@@ -801,7 +498,7 @@ export default function CitizenHeatmapPage() {
 
     circlesRef.current.forEach(
       (
-        circle: any
+        circle: GoogleCircleInstance
       ) => {
         circle.setMap(null);
       }
@@ -810,25 +507,19 @@ export default function CitizenHeatmapPage() {
     circlesRef.current = [];
 
     /*
-     * No filtered complaints
+     * If no complaints,
+     * keep map visible.
      */
 
     if (
-      filteredComplaints.length ===
-      0
+      complaints.length === 0
     ) {
-      map.setCenter(
-        DEFAULT_CENTER
-      );
-
-      map.setZoom(11);
-
       return;
     }
 
     /*
      * =================================================
-     * GROUP COMPLAINTS BY LOCATION
+     * GROUP COMPLAINTS
      * =================================================
      */
 
@@ -841,27 +532,21 @@ export default function CitizenHeatmapPage() {
       }
     >();
 
-    filteredComplaints.forEach(
+    complaints.forEach(
       (
         complaint: ComplaintLocation
       ) => {
-        /*
-         * Approx 100m grouping.
-         * Complaints close to each other
-         * become one hotspot.
-         */
-
         const latKey =
           Math.round(
             complaint.latitude *
-              1000
-          ) / 1000;
+              100
+          ) / 100;
 
         const lngKey =
           Math.round(
             complaint.longitude *
-              1000
-          ) / 1000;
+              100
+          ) / 100;
 
         const key =
           `${latKey}_${lngKey}`;
@@ -891,6 +576,10 @@ export default function CitizenHeatmapPage() {
       }
     );
 
+    /*
+     * Maximum hotspot
+     */
+
     const maxCount =
       Math.max(
         1,
@@ -911,7 +600,7 @@ export default function CitizenHeatmapPage() {
 
     /*
      * =================================================
-     * DRAW CIRCLE HOTSPOTS
+     * DRAW HOTSPOTS
      * =================================================
      */
 
@@ -928,66 +617,29 @@ export default function CitizenHeatmapPage() {
             .length;
 
         const intensity =
-          count / maxCount;
+          count /
+          maxCount;
 
         let fillColor =
           "#3b82f6";
 
-        let radius = 220;
-
-        /*
-         * LOW
-         */
-
         if (
-          count <= 1
-        ) {
-          fillColor =
-            "#3b82f6";
-
-          radius = 180;
-        }
-
-        /*
-         * MEDIUM
-         */
-
-        if (
-          count >= 2 &&
-          count <
-            Math.max(
-              3,
-              maxCount * 0.6
-            )
-        ) {
-          fillColor =
-            "#facc15";
-
-          radius = 320;
-        }
-
-        /*
-         * HIGH
-         */
-
-        if (
-          count >= 3 ||
           intensity >= 0.75
         ) {
           fillColor =
             "#ef4444";
-
-          radius = 500;
+        } else if (
+          intensity >= 0.4
+        ) {
+          fillColor =
+            "#facc15";
         }
 
-        /*
-         * Bigger hotspot for many complaints
-         */
-
-        radius +=
+        const radius =
+          250 +
           Math.min(
-            700,
-            count * 80
+            1000,
+            count * 120
           );
 
         const circle =
@@ -1008,16 +660,16 @@ export default function CitizenHeatmapPage() {
               fillColor,
 
             strokeOpacity:
-              0.45,
+              0.35,
 
-            strokeWeight: 1.5,
+            strokeWeight: 1,
 
             fillColor,
 
             fillOpacity:
-              0.10 +
+              0.12 +
               intensity *
-                0.18,
+                0.25,
 
             clickable: true,
           });
@@ -1025,41 +677,33 @@ export default function CitizenHeatmapPage() {
         circle.addListener(
           "click",
           () => {
-            const firstComplaint =
-              group
-                .complaints[0];
-
             if (
-              firstComplaint
+              group.complaints
+                .length > 0
             ) {
               setSelectedComplaint(
-                firstComplaint
+                group.complaints[0]
               );
             }
           }
         );
 
         circlesRef.current.push(
-          circle
+          circle as GoogleCircleInstance
         );
       }
     );
 
     /*
      * =================================================
-     * DRAW INDIVIDUAL COMPLAINT PINS
+     * CREATE MARKERS
      * =================================================
      */
 
-    filteredComplaints.forEach(
+    complaints.forEach(
       (
         complaint: ComplaintLocation
       ) => {
-        const pin =
-          createComplaintPin(
-            complaint
-          );
-
         const marker =
           new AdvancedMarkerElement(
             {
@@ -1075,9 +719,6 @@ export default function CitizenHeatmapPage() {
 
               title:
                 complaint.title,
-
-              content:
-                pin,
             }
           );
 
@@ -1091,21 +732,21 @@ export default function CitizenHeatmapPage() {
         );
 
         markersRef.current.push(
-          marker
+          marker as GoogleMarkerInstance
         );
       }
     );
 
     /*
      * =================================================
-     * FIT MAP TO FILTERED COMPLAINTS
+     * FIT MAP
      * =================================================
      */
 
     const bounds =
       new LatLngBounds();
 
-    filteredComplaints.forEach(
+    complaints.forEach(
       (
         complaint: ComplaintLocation
       ) => {
@@ -1124,14 +765,12 @@ export default function CitizenHeatmapPage() {
     );
 
     if (
-      filteredComplaints.length ===
+      complaints.length ===
       1
     ) {
       map.setZoom(15);
     }
-  }, [
-    filteredComplaints,
-  ]);
+  }, [complaints]);
 
   /*
    * =====================================================
@@ -1151,12 +790,6 @@ export default function CitizenHeatmapPage() {
         return;
       }
 
-      setLocationLoading(
-        true
-      );
-
-      setError(null);
-
       navigator.geolocation.getCurrentPosition(
         (
           position
@@ -1172,10 +805,6 @@ export default function CitizenHeatmapPage() {
                   .longitude,
             };
 
-          createMyLocationMarker(
-            currentPosition
-          );
-
           mapInstanceRef.current?.panTo(
             currentPosition
           );
@@ -1183,19 +812,11 @@ export default function CitizenHeatmapPage() {
           mapInstanceRef.current?.setZoom(
             16
           );
-
-          setLocationLoading(
-            false
-          );
         },
 
         () => {
-          setLocationLoading(
-            false
-          );
-
           setError(
-            "Unable to access your current location. Please allow location permission."
+            "Unable to access your current location."
           );
         },
 
@@ -1204,8 +825,6 @@ export default function CitizenHeatmapPage() {
             true,
 
           timeout: 10000,
-
-          maximumAge: 30000,
         }
       );
     };
@@ -1219,10 +838,8 @@ export default function CitizenHeatmapPage() {
   const getStatusClass =
     (
       status: string
-    ) => {
-      switch (
-        status
-      ) {
+    ): string => {
+      switch (status) {
         case "RESOLVED":
           return "text-emerald-400 bg-emerald-500/10 border-emerald-500/30";
 
@@ -1248,10 +865,13 @@ export default function CitizenHeatmapPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
+
       {/* HEADER */}
 
       <header className="border-b border-blue-500/20 bg-gray-950/90 backdrop-blur-xl">
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+
           <div>
             <span className="font-bold text-lg tracking-wide">
               Smart
@@ -1266,6 +886,7 @@ export default function CitizenHeatmapPage() {
           </div>
 
           <div className="flex items-center space-x-3">
+
             <Link
               href="/dashboard/citizen/notifications"
               className="relative p-2 rounded-xl bg-white/5 border border-white/10 text-gray-300 hover:text-cyan-400 transition"
@@ -1288,6 +909,7 @@ export default function CitizenHeatmapPage() {
                 </span>
               </button>
             </form>
+
           </div>
         </div>
       </header>
@@ -1295,16 +917,21 @@ export default function CitizenHeatmapPage() {
       {/* MAIN */}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
           {/* SIDEBAR */}
 
           <aside className="lg:col-span-3">
+
             <div className="bg-gray-950/80 border border-blue-500/20 rounded-3xl p-4 shadow-xl">
+
               <p className="text-[10px] uppercase font-bold text-gray-500 tracking-wider px-3 pb-2">
                 Menu
               </p>
 
               <nav className="space-y-1 text-sm font-medium">
+
                 <Link
                   href="/dashboard/citizen"
                   className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition"
@@ -1352,35 +979,21 @@ export default function CitizenHeatmapPage() {
                   <User className="w-4 h-4" />
                   Profile
                 </Link>
+
               </nav>
             </div>
 
             {/* STATS */}
 
             <div className="mt-4 bg-gray-950/80 border border-blue-500/20 rounded-3xl p-5 shadow-xl space-y-4">
+
               <div>
                 <p className="text-xs text-gray-400">
-                  Showing Complaints
+                  Mapped Complaints
                 </p>
 
                 <p className="text-2xl font-extrabold text-cyan-400">
-                  {
-                    filteredComplaints.length
-                  }
-                </p>
-              </div>
-
-              <div className="h-px bg-white/10" />
-
-              <div>
-                <p className="text-xs text-gray-400">
-                  Total Complaints
-                </p>
-
-                <p className="text-lg font-bold text-white">
-                  {
-                    complaints.length
-                  }
+                  {complaints.length}
                 </p>
               </div>
 
@@ -1400,36 +1013,30 @@ export default function CitizenHeatmapPage() {
                 onClick={
                   handleMyLocation
                 }
-                disabled={
-                  locationLoading
-                }
-                className="w-full flex items-center justify-center gap-2 bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 text-blue-300 px-3 py-2.5 rounded-xl text-xs font-medium transition disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 text-blue-300 px-3 py-2.5 rounded-xl text-xs font-medium transition"
               >
                 <Navigation className="w-3.5 h-3.5" />
-
-                {locationLoading
-                  ? "Locating..."
-                  : "My Location"}
+                My Location
               </button>
+
             </div>
           </aside>
 
           {/* MAP AREA */}
 
           <main className="lg:col-span-9 space-y-5">
-            {/* TITLE */}
 
             <div className="bg-gray-950/80 border border-blue-500/30 rounded-3xl p-6 shadow-xl">
+
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+
                 <div>
                   <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">
                     Civic Issue Heatmap
                   </h1>
 
                   <p className="text-xs text-gray-400 mt-1">
-                    Real-time complaint hotspots
-                    reported by citizens across
-                    Delhi.
+                    View complaint hotspots across Delhi using real-time geographic data.
                   </p>
                 </div>
 
@@ -1450,127 +1057,15 @@ export default function CitizenHeatmapPage() {
 
                   Refresh
                 </button>
+
               </div>
-            </div>
-
-            {/* FILTERS */}
-
-            <div className="bg-gray-950/80 border border-blue-500/20 rounded-3xl p-5 shadow-xl">
-              <div className="flex items-center gap-2 mb-4">
-                <Filter className="w-4 h-4 text-cyan-400" />
-
-                <h2 className="text-sm font-bold text-white">
-                  Map Filters
-                </h2>
-              </div>
-
-              {/* ALL / MY COMPLAINTS */}
-
-              <div className="grid grid-cols-2 gap-2 mb-4">
-                <button
-                  onClick={() =>
-                    setViewFilter(
-                      "ALL"
-                    )
-                  }
-                  className={`px-3 py-2.5 rounded-xl text-xs font-semibold border transition ${
-                    viewFilter ===
-                    "ALL"
-                      ? "bg-cyan-500/15 border-cyan-400/40 text-cyan-300"
-                      : "bg-white/5 border-white/10 text-gray-400 hover:text-white"
-                  }`}
-                >
-                  All Complaints
-                </button>
-
-                <button
-                  onClick={() =>
-                    setViewFilter(
-                      "MINE"
-                    )
-                  }
-                  className={`px-3 py-2.5 rounded-xl text-xs font-semibold border transition ${
-                    viewFilter ===
-                    "MINE"
-                      ? "bg-blue-500/15 border-blue-400/40 text-blue-300"
-                      : "bg-white/5 border-white/10 text-gray-400 hover:text-white"
-                  }`}
-                >
-                  My Complaints
-                </button>
-              </div>
-
-              {/* CATEGORY FILTER */}
-
-              <div className="flex flex-wrap gap-2">
-                {CATEGORY_OPTIONS.map(
-                  (
-                    option
-                  ) => (
-                    <button
-                      key={
-                        option.value
-                      }
-                      onClick={() =>
-                        setCategoryFilter(
-                          option.value
-                        )
-                      }
-                      className={`px-3 py-2 rounded-xl text-[11px] font-semibold border transition ${
-                        categoryFilter ===
-                        option.value
-                          ? "bg-blue-600/20 border-blue-400/40 text-blue-300"
-                          : "bg-white/5 border-white/10 text-gray-400 hover:text-white hover:bg-white/10"
-                      }`}
-                    >
-                      {
-                        option.label
-                      }
-                    </button>
-                  )
-                )}
-              </div>
-
-              {/* ACTIVE FILTER */}
-
-              {(categoryFilter !==
-                "ALL" ||
-                viewFilter !==
-                  "ALL") && (
-                <div className="mt-4 flex items-center justify-between rounded-xl border border-cyan-500/20 bg-cyan-500/5 px-3 py-2">
-                  <div className="text-[11px] text-gray-400">
-                    Showing{" "}
-                    <span className="font-bold text-cyan-300">
-                      {
-                        filteredComplaints.length
-                      }
-                    </span>{" "}
-                    complaints
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      setCategoryFilter(
-                        "ALL"
-                      );
-
-                      setViewFilter(
-                        "ALL"
-                      );
-                    }}
-                    className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-white"
-                  >
-                    <X className="w-3 h-3" />
-                    Clear
-                  </button>
-                </div>
-              )}
             </div>
 
             {/* ERROR */}
 
             {error && (
               <div className="p-4 rounded-2xl bg-red-950/40 border border-red-500/30 text-red-300 text-xs flex items-start gap-3">
+
                 <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
 
                 <div>
@@ -1582,56 +1077,44 @@ export default function CitizenHeatmapPage() {
                     {error}
                   </p>
                 </div>
+
               </div>
             )}
 
             {/* MAP */}
 
             <div className="relative overflow-hidden rounded-3xl border border-blue-500/30 shadow-2xl bg-gray-950">
+
               {mapLoading && (
                 <div className="absolute inset-0 z-20 flex items-center justify-center bg-gray-950/90 backdrop-blur-sm">
+
                   <div className="text-center space-y-3">
+
                     <div className="w-10 h-10 mx-auto border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
 
                     <p className="text-xs text-gray-400">
                       Loading Google Maps...
                     </p>
+
                   </div>
+
                 </div>
               )}
 
               <div
-                ref={
-                  mapRef
-                }
+                ref={mapRef}
                 className="w-full h-[550px] sm:h-[650px]"
               />
+
             </div>
-
-            {/* NO RESULTS */}
-
-            {!loading &&
-              filteredComplaints.length ===
-                0 && (
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center">
-                  <MapPin className="w-8 h-8 text-gray-600 mx-auto" />
-
-                  <p className="mt-3 text-sm font-semibold text-gray-300">
-                    No complaints found
-                  </p>
-
-                  <p className="mt-1 text-xs text-gray-500">
-                    Try another category or
-                    switch back to All Complaints.
-                  </p>
-                </div>
-              )}
 
             {/* SELECTED COMPLAINT */}
 
             {selectedComplaint && (
               <div className="bg-gray-950/90 border border-cyan-500/30 rounded-3xl p-6 shadow-xl">
+
                 <div className="flex items-start justify-between gap-4">
+
                   <div>
                     <p className="text-[10px] uppercase tracking-widest text-cyan-400 font-bold">
                       Selected Complaint
@@ -1654,9 +1137,11 @@ export default function CitizenHeatmapPage() {
                   >
                     Close
                   </button>
+
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
+
                   <div className="bg-white/5 rounded-xl p-3">
                     <p className="text-[10px] text-gray-500">
                       Category
@@ -1709,6 +1194,7 @@ export default function CitizenHeatmapPage() {
                       )}
                     </span>
                   </div>
+
                 </div>
 
                 <p className="text-[10px] text-gray-500 mt-4">
@@ -1721,13 +1207,16 @@ export default function CitizenHeatmapPage() {
                     6
                   )}
                 </p>
+
               </div>
             )}
 
             {/* LEGEND */}
 
             <div className="bg-gray-950/80 border border-blue-500/20 rounded-2xl p-4">
+
               <div className="flex flex-wrap items-center gap-5 text-[11px] text-gray-400">
+
                 <span className="font-semibold text-gray-300">
                   Hotspot intensity:
                 </span>
@@ -1747,19 +1236,14 @@ export default function CitizenHeatmapPage() {
                   High
                 </span>
 
-                <span className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-blue-600 border-2 border-white" />
-                  Complaint Pin
+                <span className="ml-auto">
+                  {complaints.length} locations mapped
                 </span>
 
-                <span className="ml-auto">
-                  {
-                    filteredComplaints.length
-                  }{" "}
-                  shown
-                </span>
               </div>
+
             </div>
+
           </main>
         </div>
       </div>

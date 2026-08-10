@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getSessionUser } from '@/lib/auth';
 import Link from 'next/link';
-
+import CitizenHeatmapBlock from "@/components/citizen/CitizenHeatmapBlock";
 export default async function DashboardPage() {
   const user = await getSessionUser();
 

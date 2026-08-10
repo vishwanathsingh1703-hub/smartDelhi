@@ -23,10 +23,10 @@ model User {
   phone        String?
   isActive     Boolean @default(true)
 
-  // Citizen side complaints
+  // Citizen complaints
   complaints Complaint[] @relation("CitizenComplaints")
 
-  // Worker side assigned complaints
+  // Worker assigned complaints
   assignedComplaints Complaint[] @relation("WorkerComplaints")
 
   notifications Notification[]
@@ -46,19 +46,68 @@ model Complaint {
   status   String @default("Pending")
   priority String @default("Medium")
 
+  // =====================================================
+  // CITIZEN MEDIA
+  // =====================================================
+
   imageUrl  String?
+  imageUrls String[] @default([])
+  videoUrl  String?
+
+  // =====================================================
+  // LOCATION
+  // =====================================================
+
   latitude  Float?
   longitude Float?
+
+  // =====================================================
+  // AI VERIFICATION
+  // =====================================================
+
+  aiVerified      Boolean   @default(false)
+  aiDecision      String?
+  aiSeverity      String?
+  aiScore         Float?
+  aiReason        String?
+  aiAnalysis      Json?
+  aiDetectedIssue String?
+  aiAnalyzedAt    DateTime?
+
+  // =====================================================
+  // ADMIN APPEAL / ESCALATION
+  // =====================================================
+
+  adminAppeal       Boolean   @default(false)
+  adminAppealReason String?
+  adminDecision     String?
+  adminReviewedAt   DateTime?
+
+  // =====================================================
+  // CITIZEN RELATION
+  // =====================================================
 
   userId String?
   user   User?   @relation("CitizenComplaints", fields: [userId], references: [id], onDelete: SetNull)
 
+  // =====================================================
+  // WORKER RELATION
+  // =====================================================
+
   assignedWorkerId String?
   assignedWorker   User?   @relation("WorkerComplaints", fields: [assignedWorkerId], references: [id], onDelete: SetNull)
+
+  // =====================================================
+  // WORK COMPLETION / CITIZEN VERIFICATION
+  // =====================================================
 
   workCompletedAt   DateTime?
   citizenVerified   Boolean   @default(false)
   citizenVerifiedAt DateTime?
+
+  // =====================================================
+  // FEEDBACK
+  // =====================================================
 
   feedback Feedback?
 
@@ -79,8 +128,9 @@ model Feedback {
   description String?
 
   createdAt DateTime @default(now())
-  user      User?    @relation(fields: [userId], references: [id])
-  userId    String?
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
 
 model Notification {

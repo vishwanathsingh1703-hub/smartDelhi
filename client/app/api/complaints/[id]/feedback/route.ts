@@ -1,60 +1,80 @@
-import { NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getSessionUser } from "@/lib/auth";
+
+interface RouteContext {
+  params: Promise<{
+    id: string;
+  }>;
+}
 
 export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  request: NextRequest,
+  { params }: RouteContext
 ) {
   try {
-    const user = await getSessionUser();
+    const citizen = await getSessionUser();
 
-    // Authentication
-    if (!user) {
+    // 1. Authentication Check
+    if (!citizen) {
       return NextResponse.json(
-        { error: 'Unauthorized: Not logged in' },
+        {
+          success: false,
+          error: "Unauthorized: Not logged in",
+        },
         { status: 401 }
       );
     }
 
-    // Only citizens can submit feedback
-    if (user.role !== 'CITIZEN') {
+    // 2. Role Access Check
+    if (citizen.role !== "CITIZEN") {
       return NextResponse.json(
-        { error: 'Forbidden: Only citizens can submit feedback' },
+        {
+          success: false,
+          error: "Forbidden: Only citizens can submit feedback",
+        },
         { status: 403 }
       );
     }
 
     const { id } = await params;
-
-    // Parse request body
     const body = await request.json();
 
-    const rating = Number(body.rating);
     const description =
-      typeof body.description === 'string'
-        ? body.description.trim()
-        : '';
+      typeof body.description === "string" ? body.description.trim() : "";
 
-    // Validate rating
-    if (
-      !Number.isInteger(rating) ||
-      rating < 1 ||
-      rating > 5
-    ) {
+    // Support both feedbackType (GOOD/SATISFACTORY/BAD) and numeric rating (1 to 5)
+    let rating = Number(body.rating);
+    let feedbackType = String(body.feedbackType || "").toUpperCase();
+
+    if (!rating && feedbackType) {
+      const feedbackMap: Record<string, number> = {
+        GOOD: 5,
+        SATISFACTORY: 3,
+        BAD: 1,
+      };
+      rating = feedbackMap[feedbackType] || 0;
+    }
+
+    if (!feedbackType && rating >= 1 && rating <= 5) {
+      if (rating >= 4) feedbackType = "GOOD";
+      else if (rating >= 3) feedbackType = "SATISFACTORY";
+      else feedbackType = "BAD";
+    }
+
+    if (!rating || rating < 1 || rating > 5) {
       return NextResponse.json(
         {
-          error: 'Invalid rating. Rating must be an integer between 1 and 5.',
+          success: false,
+          error: "Invalid rating. Must be between 1-5 or GOOD/SATISFACTORY/BAD.",
         },
         { status: 400 }
       );
     }
 
-    // Find complaint
+    // 3. Find Complaint with Existing Feedback
     const complaint = await prisma.complaint.findUnique({
-      where: {
-        id,
-      },
+      where: { id },
       include: {
         feedback: true,
       },
@@ -62,86 +82,134 @@ export async function POST(
 
     if (!complaint) {
       return NextResponse.json(
-        { error: 'Complaint not found' },
+        {
+          success: false,
+          error: "Complaint not found",
+        },
         { status: 404 }
       );
     }
 
-    // Make sure complaint belongs to logged-in citizen
-    if (complaint.userId !== user.id) {
+    // 4. Ownership Check
+    if (complaint.userId !== citizen.id) {
       return NextResponse.json(
         {
-          error:
-            'Forbidden: You do not own this complaint',
+          success: false,
+          error: "Forbidden: You can only give feedback on your own complaint",
         },
         { status: 403 }
       );
     }
 
-    // Worker must have completed the work
-    if (complaint.workCompletedAt === null) {
+    // 5. Work Completion Check
+    if (!complaint.workCompletedAt) {
       return NextResponse.json(
         {
-          error:
-            'Cannot leave feedback before the worker completes the work',
+          success: false,
+          error: "Cannot leave feedback before the worker completes the work",
         },
         { status: 400 }
       );
     }
 
-    // Citizen must verify the work first
-    if (!complaint.citizenVerified) {
-      return NextResponse.json(
-        {
-          error:
-            'Please verify the complaint before submitting feedback',
-        },
-        { status: 400 }
-      );
-    }
-
-    // Prevent duplicate feedback
+    // 6. Duplicate Feedback Check
     if (complaint.feedback) {
       return NextResponse.json(
         {
-          error:
-            'Feedback has already been submitted for this complaint',
+          success: false,
+          error: "Feedback has already been submitted for this complaint",
         },
         { status: 400 }
       );
     }
 
-    // Create feedback
-    const feedback = await prisma.feedback.create({
-      data: {
-        complaintId: id,
+    const isPositive = rating >= 3;
+    const isBad = rating < 3;
 
-        // Required by your Prisma schema
-        citizenId: user.id,
+    // 7. Atomic DB Transaction (Create Feedback + Update Status)
+    const result = await prisma.$transaction(async (tx) => {
+      const feedback = await tx.feedback.create({
+        data: {
+          complaintId: complaint.id,
+          citizenId: citizen.id,
+          workerId: complaint.assignedWorkerId,
+          rating,
+          description: description || feedbackType,
+          userId: citizen.id,
+        },
+      });
 
-        rating,
+      const updatedComplaint = await tx.complaint.update({
+        where: { id: complaint.id },
+        data: isPositive
+          ? {
+              status: "Resolved",
+              citizenVerified: true,
+              citizenVerifiedAt: new Date(),
+            }
+          : {
+              status: "Pending",
+              citizenVerified: false,
+              citizenVerifiedAt: null,
+            },
+      });
 
-        description: description || null,
-      },
+      return {
+        feedback,
+        complaint: updatedComplaint,
+      };
     });
+
+    // 8. Notifications Logic
+    if (complaint.assignedWorkerId) {
+      await prisma.notification.create({
+        data: {
+          userId: complaint.assignedWorkerId,
+          title: isBad ? "Complaint Reopened" : "Complaint Resolved",
+          message: isBad
+            ? `Citizen reported that the work for "${complaint.title}" was not satisfactory. Admin review is pending.`
+            : `Citizen marked "${complaint.title}" as resolved with rating ${rating}/5.`,
+          type: isBad ? "COMPLAINT_REOPENED" : "COMPLAINT_RESOLVED",
+        },
+      });
+    }
+
+    if (isBad) {
+      const admins = await prisma.user.findMany({
+        where: { role: "ADMIN", isActive: true },
+        select: { id: true },
+      });
+
+      if (admins.length > 0) {
+        await prisma.notification.createMany({
+          data: admins.map((admin) => ({
+            userId: admin.id,
+            title: "Complaint Requires Attention",
+            message: `Citizen reported BAD feedback for complaint "${complaint.title}". Admin review required.`,
+            type: "BAD_COMPLAINT_FEEDBACK",
+          })),
+        });
+      }
+    }
 
     return NextResponse.json(
       {
         success: true,
-        message: 'Feedback submitted successfully.',
-        feedback,
+        message: isPositive
+          ? "Thank you! Complaint has been verified & automatically resolved."
+          : "Feedback submitted. Complaint remains pending for admin review.",
+        feedback: result.feedback,
+        complaint: result.complaint,
       },
       { status: 201 }
     );
   } catch (error) {
-    console.error(
-      'Error submitting complaint feedback:',
-      error
-    );
+    console.error("COMPLAINT_FEEDBACK_ERROR:", error);
 
     return NextResponse.json(
       {
-        error: 'Internal Server Error',
+        success: false,
+        error: "Failed to submit feedback due to internal server error.",
       },
       { status: 500 }
     );

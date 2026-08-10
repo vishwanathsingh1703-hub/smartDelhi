@@ -21,8 +21,6 @@ export default function MyComplaintsPage() {
               Track and manage complaints submitted by you.
             </p>
           </div>
-
-          <ComplaintList />
         </div>
       </div>
     </AuthGuard>

@@ -1,0 +1,15 @@
+-- AlterTable
+ALTER TABLE "Complaint" ADD COLUMN     "adminAppeal" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "adminAppealReason" TEXT,
+ADD COLUMN     "adminDecision" TEXT,
+ADD COLUMN     "adminReviewedAt" TIMESTAMP(3),
+ADD COLUMN     "aiAnalysis" JSONB,
+ADD COLUMN     "aiAnalyzedAt" TIMESTAMP(3),
+ADD COLUMN     "aiDecision" TEXT,
+ADD COLUMN     "aiDetectedIssue" TEXT,
+ADD COLUMN     "aiReason" TEXT,
+ADD COLUMN     "aiScore" DOUBLE PRECISION,
+ADD COLUMN     "aiSeverity" TEXT,
+ADD COLUMN     "aiVerified" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "imageUrls" TEXT[] DEFAULT ARRAY[]::TEXT[],
+ADD COLUMN     "videoUrl" TEXT;
