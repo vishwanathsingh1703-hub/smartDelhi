@@ -142,7 +142,7 @@ export default function AboutUsPage() {
                     </nav>
 
                     <Link
-                        href="/login"
+                        href="/auth"
                         className="px-5 py-2.5 rounded-xl border border-cyan-400/40 text-cyan-300 hover:bg-cyan-400/10 transition text-sm"
                     >
                         Login | Register

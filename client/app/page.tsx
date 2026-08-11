@@ -355,14 +355,14 @@ export default function Home() {
               </a>
 
               <a
-                href="#heatmap"
+                href="/auth"
                 className="text-blue-400 transition"
               >
                 Heat Map
               </a>
 
               <a
-                href="#"
+                href="/report"
                 className="hover:text-blue-400 transition"
               >
                 Report
@@ -376,7 +376,7 @@ export default function Home() {
               </Link>
 
               <a
-                href="#"
+                href="/contact"
                 className="hover:text-blue-400 transition"
               >
                 Contact Us

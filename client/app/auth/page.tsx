@@ -220,14 +220,14 @@ export default function AuthPage() {
               href="/"
               className="hover:text-cyan-400 transition"
             >
-              Platform
+              Home
             </Link>
 
             <Link
               href="/"
               className="hover:text-cyan-400 transition"
             >
-              Solutions
+              Complains
             </Link>
 
             <Link
@@ -241,14 +241,20 @@ export default function AuthPage() {
               href="/"
               className="hover:text-cyan-400 transition"
             >
-              Analytics
+              Report
+            </Link>
+            <Link
+              href="/about-us"
+              className="text-cyan-400 hover:text-cyan-300 transition"
+            >
+              About Us
             </Link>
 
             <Link
               href="/"
               className="hover:text-cyan-400 transition"
             >
-              Dashboard
+              Contact Us
             </Link>
 
           </nav>
@@ -355,11 +361,10 @@ export default function AuthPage() {
                   <button
                     type="button"
                     onClick={() => setActiveTab('login')}
-                    className={`py-2 rounded-xl text-xs font-semibold transition-all duration-300 cursor-pointer ${
-                      activeTab === 'login'
+                    className={`py-2 rounded-xl text-xs font-semibold transition-all duration-300 cursor-pointer ${activeTab === 'login'
                         ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-md shadow-cyan-500/25'
                         : 'text-gray-400 hover:text-white'
-                    }`}
+                      }`}
                   >
                     Login
                   </button>
@@ -367,11 +372,10 @@ export default function AuthPage() {
                   <button
                     type="button"
                     onClick={() => setActiveTab('register')}
-                    className={`py-2 rounded-xl text-xs font-semibold transition-all duration-300 cursor-pointer ${
-                      activeTab === 'register'
+                    className={`py-2 rounded-xl text-xs font-semibold transition-all duration-300 cursor-pointer ${activeTab === 'register'
                         ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-md shadow-cyan-500/25'
                         : 'text-gray-400 hover:text-white'
-                    }`}
+                      }`}
                   >
                     Register
                   </button>
