@@ -3,6 +3,7 @@ import Link from 'next/link';
 import SmartDelhiAI from "@/components/citizen/SmartDelhiAI";
 import { getSessionUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import LogoutButton from "@/components/LogoutButton";
 import CitizenStats from '@/components/citizen/CitizenStats';
 import CitizenHeatmapBlock from '@/components/citizen/CitizenHeatmapBlock';
 import {
@@ -160,16 +161,7 @@ export default async function CitizenDashboardPage() {
 
             {/* Logout */}
             <form action="/api/auth/logout" method="POST">
-              <button
-                type="submit"
-                className="flex items-center space-x-1.5 bg-red-950/40 hover:bg-red-900/60 border border-red-500/30 text-red-300 px-3.5 py-2 rounded-xl text-xs font-medium transition shadow-sm"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-
-                <span className="hidden md:inline">
-                  Logout
-                </span>
-              </button>
+              <LogoutButton />
             </form>
           </div>
         </div>
@@ -345,10 +337,9 @@ export default async function CitizenDashboardPage() {
                         </span>
 
                         <span
-                          className={`text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full border ${
-                            statusColors[complaint.status] ||
+                          className={`text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full border ${statusColors[complaint.status] ||
                             'bg-gray-500/10 text-gray-300 border-gray-500/20'
-                          }`}
+                            }`}
                         >
                           {complaint.status.replace('_', ' ')}
                         </span>
