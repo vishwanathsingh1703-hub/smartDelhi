@@ -11,10 +11,145 @@ import {
   ShieldCheck,
   MapPin,
   ArrowRight,
+  Star,
+  IndianRupee,
+  TrendingUp,
+  Users,
+  CalendarCheck2,
+  Award,
+  CircleGauge,
+  UserCheck,
+  Activity,
 } from 'lucide-react';
 
 import { getSessionUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function CircularProgress({
+  value,
+  label,
+  subLabel,
+  color = '#22d3ee',
+  size = 150,
+}: {
+  value: number;
+  label: string;
+  subLabel?: string;
+  color?: string;
+  size?: number;
+}) {
+  const safeValue = Math.max(0, Math.min(100, value));
+
+  const stroke = 10;
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset =
+    circumference - (safeValue / 100) * circumference;
+
+  return (
+    <div
+      className="relative flex items-center justify-center"
+      style={{ width: size, height: size }}
+    >
+      <svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        className="-rotate-90"
+      >
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="rgba(255,255,255,0.06)"
+          strokeWidth={stroke}
+        />
+
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={color}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          className="transition-all duration-1000"
+        />
+      </svg>
+
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-3xl font-black text-white">
+          {Math.round(safeValue)}%
+        </span>
+
+        <span className="text-[10px] uppercase tracking-widest text-slate-500">
+          {label}
+        </span>
+
+        {subLabel && (
+          <span className="mt-1 text-[9px] text-slate-600">
+            {subLabel}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MetricCard({
+  title,
+  value,
+  description,
+  icon: Icon,
+  accent,
+}: {
+  title: string;
+  value: string | number;
+  description: string;
+  icon: React.ElementType;
+  accent: string;
+}) {
+  return (
+    <div className="group relative overflow-hidden rounded-3xl border border-white/[0.07] bg-white/[0.035] p-5 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-white/[0.14] hover:bg-white/[0.055]">
+      <div
+        className={`absolute -right-10 -top-10 h-28 w-28 rounded-full ${accent} opacity-[0.08] blur-3xl`}
+      />
+
+      <div className="relative">
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+            {title}
+          </p>
+
+          <div
+            className={`flex h-10 w-10 items-center justify-center rounded-2xl ${accent} bg-opacity-10`}
+          >
+            <Icon className="h-5 w-5 text-white" />
+          </div>
+        </div>
+
+        <p className="mt-4 text-3xl font-black tracking-tight text-white">
+          {value}
+        </p>
+
+        <p className="mt-2 text-xs text-slate-500">
+          {description}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   PAGE
+========================================================= */
 
 export default async function WorkerDashboardPage() {
   const user = await getSessionUser();
@@ -35,7 +170,10 @@ export default async function WorkerDashboardPage() {
     redirect('/auth');
   }
 
-  // Fetch Ward-level statistics, Assigned complaints, and Recent ward complaints concurrently
+  /* =======================================================
+     DATABASE DATA
+  ======================================================= */
+
   const [
     totalWardComplaints,
     pendingWardComplaints,
@@ -44,14 +182,12 @@ export default async function WorkerDashboardPage() {
     assignedComplaints,
     recentWardComplaints,
   ] = await Promise.all([
-    // Ward Total
     prisma.complaint.count({
       where: {
         ward: user.ward || undefined,
       },
     }),
 
-    // Ward Pending
     prisma.complaint.count({
       where: {
         ward: user.ward || undefined,
@@ -59,7 +195,6 @@ export default async function WorkerDashboardPage() {
       },
     }),
 
-    // Ward In Progress
     prisma.complaint.count({
       where: {
         ward: user.ward || undefined,
@@ -67,7 +202,6 @@ export default async function WorkerDashboardPage() {
       },
     }),
 
-    // Ward Resolved
     prisma.complaint.count({
       where: {
         ward: user.ward || undefined,
@@ -75,7 +209,6 @@ export default async function WorkerDashboardPage() {
       },
     }),
 
-    // Complaints assigned specifically to this worker
     prisma.complaint.findMany({
       where: {
         assignedWorkerId: user.id,
@@ -94,7 +227,6 @@ export default async function WorkerDashboardPage() {
       },
     }),
 
-    // Recent complaints in the worker's ward
     prisma.complaint.findMany({
       where: {
         ward: user.ward || undefined,
@@ -102,261 +234,911 @@ export default async function WorkerDashboardPage() {
       orderBy: {
         createdAt: 'desc',
       },
-      take: 10,
+      take: 8,
     }),
   ]);
 
-  // Specific Assigned Worker Counts
+  /* =======================================================
+     PERSONAL WORKER ANALYTICS
+  ======================================================= */
+
   const assignedCount = assignedComplaints.filter(
-    (c) => c.status === 'Assigned' || c.status === 'PENDING'
+    (c) =>
+      c.status === 'Assigned' ||
+      c.status === 'PENDING'
   ).length;
 
   const inProgressCount = assignedComplaints.filter(
-    (c) => c.status === 'InProgress' || c.status === 'IN_PROGRESS'
+    (c) =>
+      c.status === 'InProgress' ||
+      c.status === 'IN_PROGRESS'
   ).length;
 
   const completedCount = assignedComplaints.filter(
     (c) => c.workCompletedAt !== null
   ).length;
 
+  const totalPersonalTasks =
+    assignedComplaints.length;
+
+  const completionRate =
+    totalPersonalTasks > 0
+      ? Math.round(
+          (completedCount / totalPersonalTasks) * 100
+        )
+      : 0;
+
+  const pendingPersonalTasks = Math.max(
+    0,
+    totalPersonalTasks - completedCount
+  );
+
+  /* =======================================================
+     CURRENT MONTH SALARY
+     
+     Replace these with actual salary fields/API later.
+  ======================================================= */
+
+  const monthlySalary = 28500;
+
+  const salaryPaid = true;
+
+  /* =======================================================
+     CITIZEN REVIEW / RATING
+     
+     Demo fallback until Review model is connected.
+  ======================================================= */
+
+  const citizenRating = 4.7;
+
+  const totalReviews = Math.max(
+    12,
+    completedCount * 3
+  );
+
+  const ratingPercentage = Math.round(
+    (citizenRating / 5) * 100
+  );
+
+  /* =======================================================
+     WORKER PERFORMANCE
+  ======================================================= */
+
+  const efficiencyScore = Math.round(
+    completionRate * 0.65 +
+      ratingPercentage * 0.35
+  );
+
+  const wardResolutionRate =
+    totalWardComplaints > 0
+      ? Math.round(
+          (resolvedWardComplaints /
+            totalWardComplaints) *
+            100
+        )
+      : 0;
+
+  /* =======================================================
+     MONTHLY TASK GRAPH DATA
+     
+     Current assigned tasks are represented by
+     this worker's assignment data.
+  ======================================================= */
+
+  const monthlyAssigned = totalPersonalTasks;
+
+  const monthlyCompleted = completedCount;
+
+  const monthlyPending =
+    Math.max(
+      0,
+      monthlyAssigned - monthlyCompleted
+    );
+
+  /* =======================================================
+     RETURN UI
+  ======================================================= */
+
   return (
-    <div className="min-h-screen bg-[#030712] text-white">
-      {/* ================= HEADER ================= */}
-      <header className="border-b border-cyan-500/10 bg-black/40 backdrop-blur-xl sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+    <div className="min-h-screen bg-[#020617] text-white overflow-hidden">
+
+      {/* Ambient background */}
+
+      <div className="pointer-events-none fixed inset-0 -z-10">
+        <div className="absolute left-[10%] top-[-10%] h-[500px] w-[500px] rounded-full bg-cyan-500/[0.06] blur-[140px]" />
+        <div className="absolute right-[-10%] top-[20%] h-[500px] w-[500px] rounded-full bg-blue-500/[0.05] blur-[140px]" />
+        <div className="absolute bottom-[-10%] left-[30%] h-[500px] w-[500px] rounded-full bg-violet-500/[0.04] blur-[140px]" />
+      </div>
+
+      {/* =================================================
+          HEADER
+      ================================================= */}
+
+      <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#020617]/80 backdrop-blur-2xl">
+
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-              <ShieldCheck className="w-5 h-5 text-white" />
+
+            <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-blue-600/30 to-cyan-400/20 shadow-lg shadow-cyan-500/10">
+
+              <ShieldCheck className="h-5 w-5 text-cyan-300" />
+
             </div>
 
             <div>
-              <div className="font-bold text-lg tracking-wide">
+              <div className="text-lg font-black tracking-wide">
                 Smart<span className="text-cyan-400">DELHI</span>
               </div>
 
-              <p className="text-[9px] text-gray-400 uppercase tracking-wider font-semibold">
-                Worker Portal
+              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                Worker Command Center
               </p>
             </div>
+
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:block text-right">
-              <p className="text-sm font-semibold text-white">{user.name}</p>
+          <div className="flex items-center gap-4">
 
-              <p className="text-[10px] text-gray-400">
-                {user.ward ? `Ward: ${user.ward}` : 'MCD Worker'}
+            <div className="hidden text-right sm:block">
+              <p className="text-sm font-bold text-white">
+                {user.name}
+              </p>
+
+              <p className="mt-0.5 text-[10px] text-slate-500">
+                {user.ward
+                  ? `Ward ${user.ward}`
+                  : 'MCD Field Worker'}
               </p>
             </div>
 
-            <form action="/api/auth/logout" method="POST">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-cyan-400/20 bg-cyan-400/10 text-sm font-black text-cyan-300">
+              {user.name
+                ?.charAt(0)
+                ?.toUpperCase()}
+            </div>
+
+            <form
+              action="/api/auth/logout"
+              method="POST"
+            >
               <button
                 type="submit"
-                className="flex items-center gap-2 px-3 py-2 rounded-xl border border-red-500/30 bg-red-950/30 text-red-300 hover:bg-red-900/40 transition text-xs font-medium"
+                className="group flex items-center gap-2 rounded-xl border border-rose-500/20 bg-rose-500/[0.06] px-3 py-2 text-xs font-semibold text-rose-300 transition hover:border-rose-400/40 hover:bg-rose-500/10"
               >
-                <LogOut className="w-3.5 h-3.5" />
+                <LogOut className="h-3.5 w-3.5 transition group-hover:-translate-x-0.5" />
                 Logout
               </button>
             </form>
+
           </div>
+
         </div>
+
       </header>
 
-      {/* ================= MAIN ================= */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* WELCOME BANNER */}
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-semibold">
-            <BriefcaseBusiness className="w-3.5 h-3.5" />
-            MCD Worker Command Center
+      {/* =================================================
+          MAIN
+      ================================================= */}
+
+      <main className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+
+        {/* =================================================
+            HERO
+        ================================================= */}
+
+        <section className="relative overflow-hidden rounded-[2rem] border border-white/[0.07] bg-gradient-to-br from-cyan-500/[0.08] via-white/[0.025] to-blue-500/[0.05] p-6 shadow-2xl sm:p-8">
+
+          <div className="absolute right-[-100px] top-[-100px] h-72 w-72 rounded-full bg-cyan-400/[0.08] blur-[90px]" />
+
+          <div className="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+
+            <div>
+
+              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/[0.06] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-cyan-300">
+                <Activity className="h-3.5 w-3.5" />
+                Live Worker Performance
+              </div>
+
+              <h1 className="mt-5 text-3xl font-black tracking-tight sm:text-5xl">
+                Welcome back,{' '}
+                <span className="bg-gradient-to-r from-cyan-300 to-blue-400 bg-clip-text text-transparent">
+                  {user.name}
+                </span>
+              </h1>
+
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
+                Your personal SmartDELHI performance dashboard.
+                Track assigned civic tasks, completion rate,
+                citizen satisfaction, salary and ward-level impact
+                from one place.
+              </p>
+
+              <div className="mt-6 flex flex-wrap gap-3">
+
+                <span className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/20 bg-emerald-400/[0.06] px-3 py-2 text-xs text-emerald-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-lg shadow-emerald-400" />
+                  Worker Active
+                </span>
+
+                <span className="inline-flex items-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2 text-xs text-slate-400">
+                  <MapPin className="h-3.5 w-3.5 text-cyan-400" />
+                  {user.ward
+                    ? `Ward ${user.ward}`
+                    : 'Delhi MCD'}
+                </span>
+
+              </div>
+
+            </div>
+
+            {/* PERFORMANCE RING */}
+
+            <div className="flex justify-center lg:justify-end">
+
+              <div className="rounded-[2rem] border border-white/[0.07] bg-black/20 p-5 backdrop-blur-xl">
+
+                <CircularProgress
+                  value={efficiencyScore}
+                  label="Performance"
+                  subLabel="Overall score"
+                  color="#22d3ee"
+                  size={170}
+                />
+
+              </div>
+
+            </div>
+
           </div>
 
-          <h1 className="mt-4 text-3xl sm:text-4xl font-extrabold tracking-tight">
-            Welcome, <span className="text-cyan-400">{user.name}</span>
-          </h1>
+        </section>
 
-          <p className="mt-2 text-sm text-gray-400">
-            Manage complaints assigned directly to you and track overall ward resolution progress.
-          </p>
-        </div>
+        {/* =================================================
+            PERSONAL PERFORMANCE
+        ================================================= */}
 
-        {/* WORKER PERSONAL ASSIGNMENTS STATS */}
-        <div>
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-            Your Personal Tasks Summary
-          </h2>
+        <section>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="rounded-2xl border border-amber-500/20 bg-gray-950/80 p-5">
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-gray-400 uppercase tracking-wider">
-                  Assigned To You
-                </p>
-                <Clock3 className="w-5 h-5 text-amber-400" />
-              </div>
-              <p className="mt-3 text-3xl font-extrabold">{assignedCount}</p>
+          <div className="mb-5 flex items-end justify-between">
+
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-400">
+                Personal Analytics
+              </p>
+
+              <h2 className="mt-1 text-xl font-black">
+                Your Work Performance
+              </h2>
+
+              <p className="mt-1 text-xs text-slate-500">
+                Performance metrics specifically for you.
+              </p>
             </div>
 
-            <div className="rounded-2xl border border-blue-500/20 bg-gray-950/80 p-5">
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-gray-400 uppercase tracking-wider">
-                  Work In Progress
-                </p>
-                <BriefcaseBusiness className="w-5 h-5 text-blue-400" />
-              </div>
-              <p className="mt-3 text-3xl font-extrabold">{inProgressCount}</p>
-            </div>
+            <span className="hidden rounded-full border border-white/[0.07] bg-white/[0.03] px-3 py-1.5 text-[10px] text-slate-500 sm:block">
+              Current Month
+            </span>
 
-            <div className="rounded-2xl border border-emerald-500/20 bg-gray-950/80 p-5">
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-gray-400 uppercase tracking-wider">
-                  Completed Work
-                </p>
-                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-              </div>
-              <p className="mt-3 text-3xl font-extrabold">{completedCount}</p>
-            </div>
           </div>
-        </div>
 
-        {/* QUICK ACTION TO ASSIGNED COMPLAINTS */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
+            <MetricCard
+              title="Assigned Tasks"
+              value={monthlyAssigned}
+              description="Tasks assigned to you"
+              icon={ClipboardList}
+              accent="bg-cyan-400"
+            />
+
+            <MetricCard
+              title="Completed"
+              value={monthlyCompleted}
+              description="Successfully completed"
+              icon={CheckCircle2}
+              accent="bg-emerald-400"
+            />
+
+            <MetricCard
+              title="In Progress"
+              value={inProgressCount}
+              description="Currently being handled"
+              icon={Clock3}
+              accent="bg-blue-400"
+            />
+
+            <MetricCard
+              title="Pending"
+              value={monthlyPending}
+              description="Tasks awaiting completion"
+              icon={AlertCircle}
+              accent="bg-amber-400"
+            />
+
+          </div>
+
+        </section>
+
+        {/* =================================================
+            TASK CIRCULAR ANALYTICS
+        ================================================= */}
+
+        <section className="grid gap-5 lg:grid-cols-3">
+
+          {/* COMPLETION */}
+
+          <div className="rounded-[2rem] border border-white/[0.07] bg-white/[0.035] p-6 backdrop-blur-xl">
+
+            <div className="mb-5">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+                Task Completion
+              </p>
+
+              <h3 className="mt-1 text-lg font-black">
+                Monthly Work Ratio
+              </h3>
+            </div>
+
+            <div className="flex justify-center">
+
+              <CircularProgress
+                value={completionRate}
+                label="Completed"
+                subLabel={`${completedCount}/${totalPersonalTasks} tasks`}
+                color="#34d399"
+                size={170}
+              />
+
+            </div>
+
+            <div className="mt-6 grid grid-cols-3 gap-2 text-center">
+
+              <div className="rounded-xl bg-white/[0.03] p-3">
+                <p className="text-lg font-black text-cyan-300">
+                  {monthlyAssigned}
+                </p>
+                <p className="text-[9px] uppercase text-slate-600">
+                  Assigned
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-white/[0.03] p-3">
+                <p className="text-lg font-black text-emerald-300">
+                  {monthlyCompleted}
+                </p>
+                <p className="text-[9px] uppercase text-slate-600">
+                  Done
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-white/[0.03] p-3">
+                <p className="text-lg font-black text-amber-300">
+                  {monthlyPending}
+                </p>
+                <p className="text-[9px] uppercase text-slate-600">
+                  Pending
+                </p>
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* CITIZEN REVIEW */}
+
+          <div className="rounded-[2rem] border border-white/[0.07] bg-white/[0.035] p-6 backdrop-blur-xl">
+
+            <div className="mb-5">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+                Citizen Feedback
+              </p>
+
+              <h3 className="mt-1 text-lg font-black">
+                Your Citizen Rating
+              </h3>
+            </div>
+
+            <div className="flex justify-center">
+
+              <CircularProgress
+                value={ratingPercentage}
+                label="Rating"
+                subLabel={`${citizenRating}/5 stars`}
+                color="#f59e0b"
+                size={170}
+              />
+
+            </div>
+
+            <div className="mt-6 text-center">
+
+              <div className="flex justify-center gap-1">
+
+                {[1, 2, 3, 4, 5].map(
+                  (star) => (
+                    <Star
+                      key={star}
+                      className={`h-5 w-5 ${
+                        star <=
+                        Math.round(
+                          citizenRating
+                        )
+                          ? 'fill-amber-400 text-amber-400'
+                          : 'text-slate-700'
+                      }`}
+                    />
+                  )
+                )}
+
+              </div>
+
+              <p className="mt-3 text-sm font-bold text-white">
+                {citizenRating}/5
+              </p>
+
+              <p className="mt-1 text-xs text-slate-500">
+                Based on {totalReviews} citizen reviews
+              </p>
+
+            </div>
+
+          </div>
+
+          {/* SALARY */}
+
+          <div className="rounded-[2rem] border border-white/[0.07] bg-white/[0.035] p-6 backdrop-blur-xl">
+
+            <div className="mb-5 flex items-center justify-between">
+
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+                  Compensation
+                </p>
+
+                <h3 className="mt-1 text-lg font-black">
+                  Current Month Salary
+                </h3>
+              </div>
+
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-400/10">
+                <IndianRupee className="h-5 w-5 text-emerald-300" />
+              </div>
+
+            </div>
+
+            <div className="rounded-2xl border border-emerald-400/10 bg-emerald-400/[0.04] p-5">
+
+              <p className="text-[10px] uppercase tracking-widest text-slate-500">
+                August 2026
+              </p>
+
+              <p className="mt-2 text-4xl font-black text-white">
+                ₹{monthlySalary.toLocaleString(
+                  'en-IN'
+                )}
+              </p>
+
+              <div className="mt-4 flex items-center gap-2">
+
+                <span className="flex h-2 w-2 rounded-full bg-emerald-400 shadow-lg shadow-emerald-400/50" />
+
+                <span className="text-xs font-semibold text-emerald-300">
+                  {salaryPaid
+                    ? 'Salary Processed'
+                    : 'Processing'}
+                </span>
+
+              </div>
+
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-3">
+
+              <div className="rounded-xl bg-white/[0.03] p-3">
+                <p className="text-[9px] uppercase tracking-wider text-slate-600">
+                  Worker
+                </p>
+                <p className="mt-1 truncate text-xs font-semibold text-slate-300">
+                  {user.name}
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-white/[0.03] p-3">
+                <p className="text-[9px] uppercase tracking-wider text-slate-600">
+                  Department
+                </p>
+                <p className="mt-1 text-xs font-semibold text-slate-300">
+                  MCD
+                </p>
+              </div>
+
+            </div>
+
+          </div>
+
+        </section>
+
+        {/* =================================================
+            QUICK ACTION
+        ================================================= */}
+
         <Link
           href="/dashboard/worker/assigned"
-          className="group block rounded-3xl border border-cyan-500/30 bg-gradient-to-r from-gray-950 via-gray-900 to-gray-950 hover:border-cyan-400/60 transition p-6 shadow-xl"
+          className="group relative block overflow-hidden rounded-[2rem] border border-cyan-400/20 bg-gradient-to-r from-cyan-500/[0.08] via-blue-500/[0.04] to-transparent p-6 transition hover:border-cyan-400/40 hover:bg-cyan-500/[0.1]"
         >
-          <div className="flex items-center justify-between gap-4">
+
+          <div className="absolute right-[-50px] top-[-80px] h-56 w-56 rounded-full bg-cyan-400/[0.08] blur-3xl" />
+
+          <div className="relative flex items-center justify-between gap-5">
+
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center">
-                <BriefcaseBusiness className="w-6 h-6 text-cyan-400" />
+
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-400/10">
+                <BriefcaseBusiness className="h-6 w-6 text-cyan-300" />
               </div>
 
               <div>
-                <h3 className="text-lg font-bold text-white">
-                  View & Action Assigned Complaints
+
+                <h3 className="text-lg font-black">
+                  View & Manage Assigned Complaints
                 </h3>
-                <p className="mt-1 text-xs text-gray-400">
-                  Accept assigned jobs, verify location coordinates, and mark work completed.
+
+                <p className="mt-1 max-w-xl text-xs leading-5 text-slate-500">
+                  Accept jobs, verify complaint locations,
+                  update work status and mark completed tasks.
                 </p>
+
               </div>
+
             </div>
 
-            <ArrowRight className="w-5 h-5 text-cyan-400 group-hover:translate-x-1 transition" />
+            <ArrowRight className="h-5 w-5 text-cyan-300 transition group-hover:translate-x-1" />
+
           </div>
+
         </Link>
 
-        {/* OVERALL WARD STATISTICS */}
-        <div>
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-            Overall Ward ({user.ward || 'MCD'}) Overview
-          </h2>
+        {/* =================================================
+            WARD OVERVIEW
+        ================================================= */}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-gray-950/80 border border-cyan-500/20 rounded-2xl p-5">
-              <ClipboardList className="w-6 h-6 text-cyan-400 mb-3" />
-              <p className="text-xs text-gray-400">Total Ward Complaints</p>
-              <p className="text-3xl font-bold mt-1">{totalWardComplaints}</p>
-            </div>
+        <section>
 
-            <div className="bg-gray-950/80 border border-amber-500/20 rounded-2xl p-5">
-              <AlertCircle className="w-6 h-6 text-amber-400 mb-3" />
-              <p className="text-xs text-gray-400">Ward Pending</p>
-              <p className="text-3xl font-bold mt-1">{pendingWardComplaints}</p>
-            </div>
+          <div className="mb-5">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-400">
+              Ward Intelligence
+            </p>
 
-            <div className="bg-gray-950/80 border border-blue-500/20 rounded-2xl p-5">
-              <Clock className="w-6 h-6 text-blue-400 mb-3" />
-              <p className="text-xs text-gray-400">Ward In Progress</p>
-              <p className="text-3xl font-bold mt-1">{inProgressWardComplaints}</p>
-            </div>
+            <h2 className="mt-1 text-xl font-black">
+              Ward {user.ward || 'MCD'} Overview
+            </h2>
 
-            <div className="bg-gray-950/80 border border-emerald-500/20 rounded-2xl p-5">
-              <CheckCircle2 className="w-6 h-6 text-emerald-400 mb-3" />
-              <p className="text-xs text-gray-400">Ward Resolved</p>
-              <p className="text-3xl font-bold mt-1">{resolvedWardComplaints}</p>
-            </div>
+            <p className="mt-1 text-xs text-slate-500">
+              Civic performance across your assigned area.
+            </p>
           </div>
-        </div>
 
-        {/* RECENT WARD COMPLAINTS SECTION */}
-        <div className="bg-gray-950/80 border border-cyan-500/20 rounded-3xl p-6 shadow-2xl">
-          <div className="flex items-center justify-between mb-6">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
+            <MetricCard
+              title="Total Complaints"
+              value={totalWardComplaints}
+              description="Reported in your ward"
+              icon={ClipboardList}
+              accent="bg-cyan-400"
+            />
+
+            <MetricCard
+              title="Pending"
+              value={pendingWardComplaints}
+              description="Awaiting action"
+              icon={AlertCircle}
+              accent="bg-amber-400"
+            />
+
+            <MetricCard
+              title="In Progress"
+              value={inProgressWardComplaints}
+              description="Currently being handled"
+              icon={Clock}
+              accent="bg-blue-400"
+            />
+
+            <MetricCard
+              title="Resolved"
+              value={resolvedWardComplaints}
+              description={`${wardResolutionRate}% ward resolution rate`}
+              icon={CheckCircle2}
+              accent="bg-emerald-400"
+            />
+
+          </div>
+
+        </section>
+
+        {/* =================================================
+            PERFORMANCE INSIGHTS
+        ================================================= */}
+
+        <section className="grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
+
+          <div className="rounded-[2rem] border border-white/[0.07] bg-white/[0.035] p-6 backdrop-blur-xl">
+
+            <div className="mb-6">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+                Worker Profile
+              </p>
+
+              <h2 className="mt-1 text-xl font-black">
+                About Your Performance
+              </h2>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+
+              <div className="flex items-center gap-4 rounded-2xl border border-white/[0.05] bg-white/[0.025] p-4">
+
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-400/10">
+                  <Award className="h-5 w-5 text-violet-300" />
+                </div>
+
+                <div>
+                  <p className="text-[9px] uppercase tracking-wider text-slate-600">
+                    Efficiency
+                  </p>
+
+                  <p className="mt-1 text-xl font-black">
+                    {efficiencyScore}%
+                  </p>
+                </div>
+
+              </div>
+
+              <div className="flex items-center gap-4 rounded-2xl border border-white/[0.05] bg-white/[0.025] p-4">
+
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-400/10">
+                  <TrendingUp className="h-5 w-5 text-cyan-300" />
+                </div>
+
+                <div>
+                  <p className="text-[9px] uppercase tracking-wider text-slate-600">
+                    Completion
+                  </p>
+
+                  <p className="mt-1 text-xl font-black">
+                    {completionRate}%
+                  </p>
+                </div>
+
+              </div>
+
+              <div className="flex items-center gap-4 rounded-2xl border border-white/[0.05] bg-white/[0.025] p-4">
+
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-400/10">
+                  <Star className="h-5 w-5 text-amber-300" />
+                </div>
+
+                <div>
+                  <p className="text-[9px] uppercase tracking-wider text-slate-600">
+                    Citizen Rating
+                  </p>
+
+                  <p className="mt-1 text-xl font-black">
+                    {citizenRating}/5
+                  </p>
+                </div>
+
+              </div>
+
+              <div className="flex items-center gap-4 rounded-2xl border border-white/[0.05] bg-white/[0.025] p-4">
+
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-400/10">
+                  <UserCheck className="h-5 w-5 text-emerald-300" />
+                </div>
+
+                <div>
+                  <p className="text-[9px] uppercase tracking-wider text-slate-600">
+                    Completed Work
+                  </p>
+
+                  <p className="mt-1 text-xl font-black">
+                    {completedCount}
+                  </p>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* WARD RESOLUTION RING */}
+
+          <div className="rounded-[2rem] border border-white/[0.07] bg-white/[0.035] p-6 backdrop-blur-xl">
+
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+              Ward Health
+            </p>
+
+            <h2 className="mt-1 text-xl font-black">
+              Resolution Rate
+            </h2>
+
+            <div className="mt-5 flex justify-center">
+
+              <CircularProgress
+                value={wardResolutionRate}
+                label="Resolved"
+                subLabel={`${resolvedWardComplaints}/${totalWardComplaints}`}
+                color="#34d399"
+                size={160}
+              />
+
+            </div>
+
+            <div className="mt-5 flex items-center justify-center gap-2 text-xs text-slate-500">
+              <CircleGauge className="h-4 w-4 text-emerald-400" />
+              Overall ward resolution performance
+            </div>
+
+          </div>
+
+        </section>
+
+        {/* =================================================
+            RECENT COMPLAINTS
+        ================================================= */}
+
+        <section className="rounded-[2rem] border border-white/[0.07] bg-white/[0.035] p-6 shadow-2xl backdrop-blur-xl">
+
+          <div className="mb-6 flex items-center justify-between gap-4">
+
             <div>
-              <h2 className="text-lg font-bold text-white">Recent Ward Complaints</h2>
-              <p className="text-xs text-gray-500 mt-1">
-                Latest civic issues reported in {user.ward ? `Ward ${user.ward}` : 'your ward'}.
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-400">
+                Live Activity
+              </p>
+
+              <h2 className="mt-1 text-xl font-black">
+                Recent Ward Complaints
+              </h2>
+
+              <p className="mt-1 text-xs text-slate-500">
+                Latest civic issues reported in your ward.
               </p>
             </div>
 
             <Link
               href="/dashboard/worker/assigned"
-              className="inline-flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 font-semibold"
+              className="inline-flex items-center gap-1 text-xs font-bold text-cyan-300 transition hover:text-cyan-200"
             >
-              View All Assigned
-              <ArrowRight className="w-3.5 h-3.5" />
+              View All
+              <ArrowRight className="h-3.5 w-3.5" />
             </Link>
+
           </div>
 
           {recentWardComplaints.length === 0 ? (
-            <div className="text-center py-12 border border-dashed border-white/10 rounded-2xl">
-              <ClipboardList className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-              <p className="text-sm text-gray-300">No complaints found</p>
-              <p className="text-xs text-gray-500 mt-1">
-                There are currently no complaints reported in your ward.
+
+            <div className="rounded-2xl border border-dashed border-white/10 py-14 text-center">
+
+              <ClipboardList className="mx-auto mb-3 h-10 w-10 text-slate-700" />
+
+              <p className="text-sm font-semibold text-slate-300">
+                No complaints found
               </p>
+
+              <p className="mt-1 text-xs text-slate-600">
+                There are currently no complaints in your ward.
+              </p>
+
             </div>
+
           ) : (
+
             <div className="space-y-3">
-              {recentWardComplaints.map((complaint) => (
-                <div
-                  key={complaint.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-cyan-500/30 transition"
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-semibold text-sm text-white">
-                        {complaint.title}
-                      </h3>
 
-                      <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-cyan-500/20 bg-cyan-500/10 text-cyan-400">
-                        {complaint.status.replace('_', ' ')}
-                      </span>
+              {recentWardComplaints.map(
+                (complaint) => (
 
-                      <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-amber-500/20 bg-amber-500/10 text-amber-400">
-                        {complaint.priority}
-                      </span>
+                  <div
+                    key={complaint.id}
+                    className="group flex flex-col gap-4 rounded-2xl border border-white/[0.05] bg-white/[0.025] p-4 transition hover:border-cyan-400/20 hover:bg-cyan-400/[0.025] sm:flex-row sm:items-center sm:justify-between"
+                  >
+
+                    <div className="min-w-0 flex-1">
+
+                      <div className="flex flex-wrap items-center gap-2">
+
+                        <h3 className="text-sm font-bold text-white">
+                          {complaint.title}
+                        </h3>
+
+                        <span className="rounded-full border border-cyan-400/20 bg-cyan-400/[0.06] px-2 py-1 text-[9px] font-black uppercase text-cyan-300">
+                          {complaint.status.replace(
+                            '_',
+                            ' '
+                          )}
+                        </span>
+
+                        <span className="rounded-full border border-amber-400/20 bg-amber-400/[0.06] px-2 py-1 text-[9px] font-black uppercase text-amber-300">
+                          {complaint.priority}
+                        </span>
+
+                      </div>
+
+                      <p className="mt-1 line-clamp-1 text-xs text-slate-500">
+                        {complaint.description ||
+                          'No description provided.'}
+                      </p>
+
+                      <div className="mt-2 flex flex-wrap items-center gap-3 text-[10px] text-slate-600">
+
+                        <span>
+                          Category:{' '}
+                          <strong className="text-slate-400">
+                            {complaint.category}
+                          </strong>
+                        </span>
+
+                        <span>•</span>
+
+                        <span className="inline-flex items-center gap-1">
+                          <MapPin className="h-3 w-3 text-cyan-400" />
+
+                          {complaint.latitude !==
+                            null &&
+                          complaint.longitude !==
+                            null
+                            ? 'Location Available'
+                            : 'No Coordinates'}
+                        </span>
+
+                      </div>
+
                     </div>
 
-                    <p className="text-xs text-gray-400 mt-1 line-clamp-1">
-                      {complaint.description || 'No description provided.'}
-                    </p>
+                    <Link
+                      href="/dashboard/worker/assigned"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-400/[0.04] px-4 py-2.5 text-xs font-bold text-cyan-300 transition hover:bg-cyan-400/10"
+                    >
+                      Manage
+                      <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
+                    </Link>
 
-                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-gray-500 mt-2">
-                      <span>
-                        Category: <strong className="text-gray-300">{complaint.category}</strong>
-                      </span>
-                      <span>•</span>
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin className="w-3 h-3 text-cyan-400" />
-                        {complaint.latitude !== null && complaint.longitude !== null
-                          ? 'Location Available'
-                          : 'No Coordinates'}
-                      </span>
-                    </div>
                   </div>
 
-                  <Link
-                    href={`/dashboard/worker/assigned`}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/10 text-xs font-semibold transition"
-                  >
-                    Manage Work
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              ))}
+                )
+              )}
+
             </div>
+
           )}
-        </div>
+
+        </section>
+
       </main>
+
+      {/* =================================================
+          FOOTER
+      ================================================= */}
+
+      <footer className="mx-auto max-w-7xl px-4 pb-8 pt-2 sm:px-6 lg:px-8">
+
+        <div className="flex flex-col items-center justify-between gap-3 border-t border-white/[0.05] pt-6 text-[10px] text-slate-600 sm:flex-row">
+
+          <p>
+            SmartDELHI • Worker Command Center
+          </p>
+
+          <p>
+            Civic Intelligence & Field Operations
+          </p>
+
+        </div>
+
+      </footer>
+
     </div>
   );
 }

@@ -37,7 +37,7 @@ export default function Home() {
     const i = loopNum % citiesList.length;
     // Heatmap / Issue Filter State
     const fullText = citiesList[i];
-    
+
     const timer = setTimeout(() => {
       const updatedText = isDeleting
         ? fullText.substring(0, displayText.length - 1)
@@ -514,364 +514,799 @@ export default function Home() {
               </div>
 
             </div>
+<div className="lg:col-span-5 relative group">
 
-            {/* =================================================
-                RIGHT COMMAND CENTER
-            ================================================= */}
+    {/* =========================================================
+        AMBIENT ENVIRONMENT
+    ========================================================= */}
 
-            <div className="lg:col-span-5 relative group">
+    <div
+        className="
+            absolute
+            left-1/2
+            top-1/2
+            -translate-x-1/2
+            -translate-y-1/2
+            w-[520px]
+            h-[420px]
+            rounded-full
+            bg-cyan-400/[0.08]
+            blur-[120px]
+            pointer-events-none
+            transition-all
+            duration-1000
+            group-hover:bg-cyan-400/[0.12]
+        "
+    />
 
-              {/* AMBIENT LIGHT */}
+    <div
+        className="
+            absolute
+            right-0
+            top-[12%]
+            w-[220px]
+            h-[220px]
+            rounded-full
+            bg-blue-600/[0.08]
+            blur-[100px]
+            pointer-events-none
+        "
+    />
 
-              <div
-                className="
-                  absolute
-                  -inset-10
-                  rounded-[50px]
-                  bg-cyan-500/[0.07]
-                  blur-[80px]
-                  opacity-70
-                  group-hover:opacity-100
-                  transition-opacity
-                  duration-1000
-                  pointer-events-none
-                "
-              />
+    {/* =========================================================
+        MAIN DISPLAY STAGE
+    ========================================================= */}
 
-              <div
-                className="
-                  absolute
-                  right-0
-                  top-10
-                  w-64
-                  h-64
-                  rounded-full
-                  bg-blue-600/[0.08]
-                  blur-[90px]
-                  pointer-events-none
-                "
-              />
+    <motion.div
+        initial={{
+            opacity: 0,
+            x: 70,
+            scale: 0.94,
+        }}
+        whileInView={{
+            opacity: 1,
+            x: 0,
+            scale: 1,
+        }}
+        viewport={{
+            once: true,
+            amount: 0.2,
+        }}
+        transition={{
+            duration: 1,
+            ease: [0.22, 1, 0.36, 1],
+        }}
+        className="
+            relative
+            min-h-[560px]
+            lg:min-h-[620px]
+            flex
+            items-center
+            justify-center
+        "
+    >
 
-              {/* MAIN PANEL */}
+        {/* =====================================================
+            FLOATING PARTICLES
+        ===================================================== */}
 
-              <motion.div
-                initial={{
-                  opacity: 0,
-                  x: 40,
-                  scale: 0.96,
-                }}
-                whileInView={{
-                  opacity: 1,
-                  x: 0,
-                  scale: 1,
-                }}
-                viewport={{
-                  once: true,
-                  amount: 0.2,
+        {[
+            ["7%", "20%", 3.2],
+            ["14%", "74%", 4.1],
+            ["25%", "10%", 3.7],
+            ["78%", "14%", 4.4],
+            ["90%", "62%", 3.5],
+            ["73%", "88%", 4.8],
+            ["44%", "3%", 3.9],
+            ["56%", "94%", 4.2],
+        ].map(([left, top, duration], index) => (
+
+            <motion.span
+                key={index}
+                animate={{
+                    y: [0, -12, 0],
+                    opacity: [0.15, 0.8, 0.15],
+                    scale: [0.7, 1.25, 0.7],
                 }}
                 transition={{
-                  duration: 0.9,
-                  ease: [0.22, 1, 0.36, 1],
-                }}
-                whileHover={{
-                  y: -5,
+                    duration: duration as number,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: index * 0.2,
                 }}
                 className="
-                  relative
-                  overflow-hidden
-                  rounded-[32px]
-                  border
-                  border-white/[0.10]
-                  bg-[#08111f]/90
-                  backdrop-blur-2xl
-                  shadow-[0_35px_100px_rgba(0,0,0,0.55)]
-                  transition-all
-                  duration-700
+                    absolute
+                    w-1
+                    h-1
+                    rounded-full
+                    bg-cyan-300
+                    shadow-[0_0_14px_rgba(34,211,238,0.9)]
+                    pointer-events-none
                 "
-              >
+                style={{
+                    left: left as string,
+                    top: top as string,
+                }}
+            />
 
-                {/* TOP LIGHT */}
+        ))}
 
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/70 to-transparent" />
 
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-72 h-24 bg-cyan-400/[0.06] blur-[45px] pointer-events-none" />
+        {/* =====================================================
+            DISPLAY FLOAT ANIMATION
+        ===================================================== */}
+
+        <motion.div
+            animate={{
+                y: [0, -8, 0],
+            }}
+            transition={{
+                duration: 7,
+                repeat: Infinity,
+                ease: "easeInOut",
+            }}
+            whileHover={{
+                y: -12,
+                scale: 1.012,
+            }}
+            className="
+                relative
+                z-20
+                w-full
+                max-w-[760px]
+                transition-transform
+                duration-700
+                ease-out
+            "
+        >
+
+            {/* =================================================
+                OUTER DISPLAY GLOW
+            ================================================= */}
+
+            <div
+                className="
+                    absolute
+                    -inset-10
+                    rounded-[45px]
+                    bg-cyan-400/[0.07]
+                    blur-[60px]
+                    pointer-events-none
+                "
+            />
+
+            {/* =================================================
+                MONITOR / LAPTOP BODY
+            ================================================= */}
+
+            <div
+                className="
+                    relative
+                    rounded-[30px]
+                    p-[5px]
+                    bg-gradient-to-b
+                    from-[#26384b]
+                    via-[#101c2b]
+                    to-[#03070d]
+                    shadow-[0_50px_120px_rgba(0,0,0,0.75)]
+                "
+            >
 
                 {/* =================================================
-                    PANEL HEADER
+                    SCREEN BEZEL
                 ================================================= */}
 
-                <div className="relative px-6 sm:px-7 pt-6 pb-5">
+                <div
+                    className="
+                        relative
+                        overflow-hidden
+                        rounded-[26px]
+                        border
+                        border-white/[0.09]
+                        bg-[#02060c]
+                    "
+                >
 
-                  <div className="flex items-start justify-between">
+                    {/* =================================================
+                        DISPLAY CONTENT
+                    ================================================= */}
 
-                    <div>
+                    <div
+                        className="
+                            relative
+                            min-h-[450px]
+                            sm:min-h-[480px]
+                            lg:min-h-[500px]
+                            overflow-hidden
+                            bg-[#030812]
+                        "
+                    >
 
-                      <div className="flex items-center gap-2 text-[10px] tracking-[0.28em] uppercase text-cyan-400 font-semibold">
+                        {/* BACKGROUND GRID */}
 
-                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.9)]" />
+                        <div
+                            className="
+                                absolute
+                                inset-0
+                                opacity-[0.16]
+                                bg-[linear-gradient(rgba(34,211,238,0.10)_1px,transparent_1px),linear-gradient(90deg,rgba(34,211,238,0.10)_1px,transparent_1px)]
+                                bg-[size:32px_32px]
+                            "
+                        />
 
-                        Delhi Intelligence
+                        {/* CENTRAL SCREEN GLOW */}
 
-                      </div>
+                        <div
+                            className="
+                                absolute
+                                left-1/2
+                                top-[42%]
+                                -translate-x-1/2
+                                -translate-y-1/2
+                                w-[330px]
+                                h-[260px]
+                                rounded-full
+                                bg-cyan-400/[0.06]
+                                blur-[80px]
+                            "
+                        />
 
-                      <h3 className="mt-2 text-2xl sm:text-[27px] font-semibold tracking-[-0.03em] text-white">
-                        City Pulse
-                      </h3>
+                        {/* =================================================
+                            TOP SYSTEM BAR
+                        ================================================= */}
 
-                      <p className="mt-1 text-xs text-slate-500">
-                        Real-time civic activity overview
-                      </p>
+                        <div
+                            className="
+                                relative
+                                z-20
+                                h-[58px]
+                                px-5
+                                sm:px-7
+                                flex
+                                items-center
+                                justify-between
+                                border-b
+                                border-white/[0.06]
+                                bg-white/[0.015]
+                            "
+                        >
+
+                            <div className="flex items-center gap-3">
+
+                                <div className="flex gap-1.5">
+
+                                    <span className="w-2.5 h-2.5 rounded-full bg-red-400/70" />
+                                    <span className="w-2.5 h-2.5 rounded-full bg-amber-300/70" />
+                                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400/70" />
+
+                                </div>
+
+                                <div className="hidden sm:block ml-3 text-[9px] tracking-[0.28em] uppercase text-slate-500">
+                                    SmartDELHI / Intelligence
+                                </div>
+
+                            </div>
+
+
+                            <div className="flex items-center gap-4">
+
+                                <span className="hidden sm:block text-[9px] uppercase tracking-[0.2em] text-slate-600">
+                                    Delhi Network
+                                </span>
+
+                                <div className="flex items-center gap-2 text-[9px] text-emerald-400">
+
+                                    <span className="relative flex w-2 h-2">
+
+                                        <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-50" />
+
+                                        <span className="relative w-2 h-2 rounded-full bg-emerald-400" />
+
+                                    </span>
+
+                                    LIVE
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        {/* =================================================
+                            MAIN DASHBOARD AREA
+                        ================================================= */}
+
+                        <div className="relative z-10 px-5 sm:px-7 py-6">
+
+                            {/* HEADER */}
+
+                            <div className="flex items-end justify-between">
+
+                                <div>
+
+                                    <div className="flex items-center gap-2">
+
+                                        <span
+                                            className="
+                                                w-1.5
+                                                h-1.5
+                                                rounded-full
+                                                bg-cyan-400
+                                                shadow-[0_0_12px_rgba(34,211,238,0.9)]
+                                            "
+                                        />
+
+                                        <span className="text-[9px] uppercase tracking-[0.3em] text-cyan-400">
+                                            City Intelligence
+                                        </span>
+
+                                    </div>
+
+                                    <h3 className="mt-2 text-2xl sm:text-3xl font-semibold tracking-[-0.04em] text-white">
+                                        Delhi Pulse
+                                    </h3>
+
+                                    <p className="mt-1 text-[11px] text-slate-500">
+                                        Unified civic intelligence system
+                                    </p>
+
+                                </div>
+
+
+                                <div className="text-right">
+
+                                    <p className="text-[8px] uppercase tracking-[0.2em] text-slate-600">
+                                        STATUS
+                                    </p>
+
+                                    <p className="mt-1 text-[10px] text-emerald-400">
+                                        Operational
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+
+                            {/* =================================================
+                                INTELLIGENCE VISUAL
+                            ================================================= */}
+
+                            <div
+                                className="
+                                    relative
+                                    mt-6
+                                    h-[175px]
+                                    sm:h-[190px]
+                                    overflow-hidden
+                                    rounded-[20px]
+                                    border
+                                    border-white/[0.07]
+                                    bg-[#020711]
+                                "
+                            >
+
+                                {/* GRID */}
+
+                                <div
+                                    className="
+                                        absolute
+                                        inset-0
+                                        opacity-50
+                                        bg-[linear-gradient(rgba(34,211,238,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(34,211,238,0.06)_1px,transparent_1px)]
+                                        bg-[size:27px_27px]
+                                    "
+                                />
+
+
+                                {/* RADAR GLOW */}
+
+                                <div
+                                    className="
+                                        absolute
+                                        left-1/2
+                                        top-1/2
+                                        -translate-x-1/2
+                                        -translate-y-1/2
+                                        w-[150px]
+                                        h-[150px]
+                                        rounded-full
+                                        bg-cyan-400/[0.04]
+                                        blur-[35px]
+                                    "
+                                />
+
+
+                                {/* RADAR RINGS */}
+
+                                {[150, 112, 72].map((size, index) => (
+
+                                    <div
+                                        key={size}
+                                        className="
+                                            absolute
+                                            left-1/2
+                                            top-1/2
+                                            -translate-x-1/2
+                                            -translate-y-1/2
+                                            rounded-full
+                                            border
+                                            border-cyan-400/20
+                                        "
+                                        style={{
+                                            width: size,
+                                            height: size,
+                                        }}
+                                    />
+
+                                ))}
+
+
+                                {/* ROTATING RADAR */}
+
+                                <motion.div
+                                    animate={{
+                                        rotate: 360,
+                                    }}
+                                    transition={{
+                                        duration: 14,
+                                        repeat: Infinity,
+                                        ease: "linear",
+                                    }}
+                                    className="
+                                        absolute
+                                        left-1/2
+                                        top-1/2
+                                        -translate-x-1/2
+                                        -translate-y-1/2
+                                        w-[150px]
+                                        h-[150px]
+                                        rounded-full
+                                    "
+                                >
+
+                                    <div
+                                        className="
+                                            absolute
+                                            left-1/2
+                                            top-0
+                                            w-px
+                                            h-1/2
+                                            bg-gradient-to-b
+                                            from-cyan-300
+                                            to-transparent
+                                            origin-bottom
+                                        "
+                                    />
+
+                                </motion.div>
+
+
+                                {/* CENTER */}
+
+                                <div
+                                    className="
+                                        absolute
+                                        left-1/2
+                                        top-1/2
+                                        -translate-x-1/2
+                                        -translate-y-1/2
+                                        text-center
+                                    "
+                                >
+
+                                    <div className="text-[8px] uppercase tracking-[0.3em] text-cyan-400/60">
+                                        DELHI
+                                    </div>
+
+                                    <div className="mt-1 text-xs font-semibold text-white">
+                                        Live Network
+                                    </div>
+
+                                </div>
+
+
+                                {/* SIGNALS */}
+
+                                {[
+                                    ["18%", "30%", "bg-red-400"],
+                                    ["78%", "25%", "bg-amber-300"],
+                                    ["80%", "70%", "bg-purple-400"],
+                                    ["21%", "72%", "bg-cyan-300"],
+                                    ["61%", "18%", "bg-emerald-400"],
+                                    ["39%", "78%", "bg-blue-400"],
+                                ].map(([left, top, color], index) => (
+
+                                    <motion.span
+                                        key={index}
+                                        animate={{
+                                            opacity: [0.2, 1, 0.2],
+                                            scale: [0.6, 1.3, 0.6],
+                                        }}
+                                        transition={{
+                                            duration: 2.2 + index * 0.3,
+                                            repeat: Infinity,
+                                            ease: "easeInOut",
+                                            delay: index * 0.25,
+                                        }}
+                                        className={`
+                                            absolute
+                                            ${color}
+                                            w-1.5
+                                            h-1.5
+                                            rounded-full
+                                        `}
+                                        style={{
+                                            left,
+                                            top,
+                                        }}
+                                    />
+
+                                ))}
+
+
+                                {/* SCANNING BEAM */}
+
+                                <motion.div
+                                    animate={{
+                                        x: ["-120%", "500%"],
+                                    }}
+                                    transition={{
+                                        duration: 4,
+                                        repeat: Infinity,
+                                        ease: "linear",
+                                    }}
+                                    className="
+                                        absolute
+                                        top-0
+                                        bottom-0
+                                        w-20
+                                        bg-gradient-to-r
+                                        from-transparent
+                                        via-cyan-400/[0.12]
+                                        to-transparent
+                                        skew-x-[-15deg]
+                                    "
+                                />
+
+
+                                <div className="absolute left-4 top-4 text-[8px] uppercase tracking-[0.2em] text-slate-600">
+                                    Civic Signals
+                                </div>
+
+                                <div className="absolute right-4 bottom-4 text-[8px] text-emerald-400">
+                                    ● Network stable
+                                </div>
+
+                            </div>
+
+
+                            {/* =================================================
+                                METRICS
+                            ================================================= */}
+
+                            <div className="mt-6 grid grid-cols-3 gap-y-5">
+
+                                {[
+                                    ["Complaints", "1,284", "text-white"],
+                                    ["AI Verified", "96.8%", "text-emerald-300"],
+                                    ["Response", "18 min", "text-white"],
+                                    ["Solved", "1,031", "text-white"],
+                                    ["Departments", "12", "text-white"],
+                                    ["Wards", "272", "text-cyan-300"],
+                                ].map(([label, value, color], index) => (
+
+                                    <motion.div
+                                        key={label}
+                                        initial={{
+                                            opacity: 0,
+                                            y: 8,
+                                        }}
+                                        whileInView={{
+                                            opacity: 1,
+                                            y: 0,
+                                        }}
+                                        viewport={{
+                                            once: true,
+                                        }}
+                                        transition={{
+                                            duration: 0.45,
+                                            delay: index * 0.06,
+                                        }}
+                                        whileHover={{
+                                            y: -3,
+                                        }}
+                                        className="cursor-default"
+                                    >
+
+                                        <p className="text-[8px] uppercase tracking-[0.15em] text-slate-600">
+                                            {label}
+                                        </p>
+
+                                        <p
+                                            className={`
+                                                mt-1
+                                                text-lg
+                                                sm:text-xl
+                                                font-semibold
+                                                tracking-tight
+                                                ${color}
+                                            `}
+                                        >
+                                            {value}
+                                        </p>
+
+                                    </motion.div>
+
+                                ))}
+
+                            </div>
+
+
+                            {/* =================================================
+                                SYSTEM FOOTER
+                            ================================================= */}
+
+                            <div
+                                className="
+                                    mt-5
+                                    pt-4
+                                    border-t
+                                    border-white/[0.06]
+                                    flex
+                                    items-center
+                                    justify-between
+                                "
+                            >
+
+                                <div>
+
+                                    <p className="text-[8px] uppercase tracking-[0.2em] text-slate-600">
+                                        Intelligence Core
+                                    </p>
+
+                                    <p className="mt-1 text-[9px] text-slate-500">
+                                        Monitoring civic infrastructure
+                                    </p>
+
+                                </div>
+
+                                <div className="flex items-center gap-2">
+
+                                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
+
+                                    <span className="text-[8px] uppercase tracking-[0.2em] text-cyan-400">
+                                        ACTIVE
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        {/* =================================================
+                            GLASS REFLECTION
+                        ================================================= */}
+
+                        <div
+                            className="
+                                absolute
+                                inset-x-0
+                                top-0
+                                h-[30%]
+                                bg-gradient-to-b
+                                from-white/[0.055]
+                                via-white/[0.012]
+                                to-transparent
+                                pointer-events-none
+                            "
+                        />
 
                     </div>
-
-                    {/* LIVE INDICATOR */}
-
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-400/20 bg-emerald-400/[0.06] text-emerald-300 text-[10px] font-medium">
-
-                      <span className="relative flex w-2 h-2">
-
-                        <span className="absolute inline-flex w-full h-full rounded-full bg-emerald-400 opacity-60 animate-ping" />
-
-                        <span className="relative inline-flex w-2 h-2 rounded-full bg-emerald-400" />
-
-                      </span>
-
-                      LIVE
-
-                    </div>
-
-                  </div>
 
                 </div>
 
+
                 {/* =================================================
-                    MAIN ACTIVITY VISUAL
+                    DISPLAY LOWER EDGE
                 ================================================= */}
 
-                <div className="relative mx-6 sm:mx-7 h-[205px] overflow-hidden rounded-[24px] border border-white/[0.07] bg-[#050b14]">
+                <div
+                    className="
+                        relative
+                        mx-auto
+                        w-[72%]
+                        h-[14px]
+                        bg-gradient-to-b
+                        from-[#24364a]
+                        to-[#07101b]
+                        rounded-b-[18px]
+                        shadow-[0_15px_35px_rgba(0,0,0,0.6)]
+                    "
+                >
 
-                  {/* GRID */}
-
-                  <div className="absolute inset-0 opacity-40 bg-[linear-gradient(rgba(56,189,248,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(56,189,248,0.08)_1px,transparent_1px)] bg-[size:32px_32px]" />
-
-                  {/* CENTER GLOW */}
-
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full bg-cyan-400/[0.08] blur-[45px]" />
-
-                  {/* CITY SIGNAL */}
-
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[135px] h-[135px] rounded-full border border-cyan-400/20" />
-
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92px] h-[92px] rounded-full border border-cyan-400/20" />
-
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[45px] h-[45px] rounded-full bg-cyan-400/[0.08] border border-cyan-300/40 shadow-[0_0_30px_rgba(34,211,238,0.18)]" />
-
-                  {/* SCANNING LINE */}
-
-                  <motion.div
-                    animate={{
-                      x: ["-20%", "120%"],
-                    }}
-                    transition={{
-                      duration: 4,
-                      repeat: Infinity,
-                      ease: "linear",
-                    }}
-                    className="absolute top-0 bottom-0 w-20 bg-gradient-to-r from-transparent via-cyan-400/[0.12] to-transparent skew-x-[-12deg]"
-                  />
-
-                  {/* SIGNAL POINTS */}
-
-                  <motion.span
-                    animate={{
-                      y: [0, -5, 0],
-                      opacity: [0.5, 1, 0.5],
-                    }}
-                    transition={{
-                      duration: 2.5,
-                      repeat: Infinity,
-                    }}
-                    className="absolute left-[24%] top-[30%] w-2 h-2 rounded-full bg-red-400 shadow-[0_0_14px_rgba(248,113,113,0.8)]"
-                  />
-
-                  <motion.span
-                    animate={{
-                      y: [0, 5, 0],
-                      opacity: [0.5, 1, 0.5],
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                    }}
-                    className="absolute right-[25%] top-[28%] w-2 h-2 rounded-full bg-amber-300 shadow-[0_0_14px_rgba(252,211,77,0.8)]"
-                  />
-
-                  <motion.span
-                    animate={{
-                      y: [0, -4, 0],
-                      opacity: [0.5, 1, 0.5],
-                    }}
-                    transition={{
-                      duration: 2.8,
-                      repeat: Infinity,
-                    }}
-                    className="absolute right-[30%] bottom-[24%] w-2 h-2 rounded-full bg-purple-400 shadow-[0_0_14px_rgba(192,132,252,0.8)]"
-                  />
-
-                  <motion.span
-                    animate={{
-                      y: [0, 4, 0],
-                      opacity: [0.5, 1, 0.5],
-                    }}
-                    transition={{
-                      duration: 2.2,
-                      repeat: Infinity,
-                    }}
-                    className="absolute left-[30%] bottom-[25%] w-2 h-2 rounded-full bg-cyan-300 shadow-[0_0_14px_rgba(103,232,249,0.8)]"
-                  />
-
-                  {/* CENTER LABEL */}
-
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-
-                    <div className="text-[9px] uppercase tracking-[0.28em] text-cyan-400/70">
-                      Delhi
-                    </div>
-
-                    <div className="mt-1 text-sm font-semibold text-white">
-                      Live Network
-                    </div>
-
-                  </div>
-
-                  {/* TOP LEFT LABEL */}
-
-                  <div className="absolute left-4 top-4 text-[9px] uppercase tracking-[0.2em] text-slate-500">
-                    Civic activity
-                  </div>
-
-                  {/* BOTTOM RIGHT */}
-
-                  <div className="absolute right-4 bottom-4 text-[9px] text-emerald-400 font-medium">
-                    ● Systems operational
-                  </div>
+                    <div
+                        className="
+                            absolute
+                            left-1/2
+                            top-1/2
+                            -translate-x-1/2
+                            -translate-y-1/2
+                            w-14
+                            h-1
+                            rounded-full
+                            bg-white/[0.08]
+                        "
+                    />
 
                 </div>
 
+
                 {/* =================================================
-                    LIVE METRICS
+                    FLOOR LIGHT
                 ================================================= */}
 
-                <div className="px-6 sm:px-7 py-6">
-
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-5 gap-y-6">
-
-                    {/* ACTIVE COMPLAINTS */}
-
-                    <div className="group/stat">
-                      <div className="text-[10px] uppercase tracking-[0.16em] text-slate-500">
-                        Active Complaints
-                      </div>
-
-                      <div className="mt-1.5 text-2xl font-semibold tracking-tight text-white transition-colors group-hover/stat:text-cyan-300">
-                        1,284
-                      </div>
-                    </div>
-
-                    {/* AI VERIFIED */}
-
-                    <div className="group/stat">
-                      <div className="text-[10px] uppercase tracking-[0.16em] text-slate-500">
-                        AI Verified
-                      </div>
-
-                      <div className="mt-1.5 text-2xl font-semibold tracking-tight text-emerald-300">
-                        96.8%
-                      </div>
-                    </div>
-
-                    {/* RESPONSE */}
-
-                    <div className="group/stat">
-                      <div className="text-[10px] uppercase tracking-[0.16em] text-slate-500">
-                        Avg Response
-                      </div>
-
-                      <div className="mt-1.5 text-2xl font-semibold tracking-tight text-white">
-                        18 min
-                      </div>
-                    </div>
-
-                    {/* SOLVED */}
-
-                    <div className="group/stat">
-                      <div className="text-[10px] uppercase tracking-[0.16em] text-slate-500">
-                        Solved Today
-                      </div>
-
-                      <div className="mt-1.5 text-2xl font-semibold tracking-tight text-white">
-                        1,031
-                      </div>
-                    </div>
-
-                    {/* DEPARTMENTS */}
-
-                    <div className="group/stat">
-                      <div className="text-[10px] uppercase tracking-[0.16em] text-slate-500">
-                        Departments
-                      </div>
-
-                      <div className="mt-1.5 text-2xl font-semibold tracking-tight text-white">
-                        12
-                      </div>
-                    </div>
-
-                    {/* WARDS */}
-
-                    <div className="group/stat">
-                      <div className="text-[10px] uppercase tracking-[0.16em] text-slate-500">
-                        Wards Active
-                      </div>
-
-                      <div className="mt-1.5 text-2xl font-semibold tracking-tight text-cyan-300">
-                        272
-                      </div>
-                    </div>
-
-                  </div>
-
-                  {/* BOTTOM STATUS */}
-
-                  <div className="mt-6 pt-5 border-t border-white/[0.07] flex items-center justify-between">
-
-                    <div>
-
-                      <div className="text-[10px] uppercase tracking-[0.2em] text-slate-600">
-                        Intelligence status
-                      </div>
-
-                      <div className="mt-1 text-xs text-slate-400">
-                        Monitoring Delhi civic systems
-                      </div>
-
-                    </div>
-
-                    <div className="flex items-center gap-2 text-[10px] text-emerald-400">
-
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.8)]" />
-
-                      Operational
-
-                    </div>
-
-                  </div>
-
-                </div>
-
-              </motion.div>
+                <div
+                    className="
+                        absolute
+                        left-1/2
+                        bottom-[-35px]
+                        -translate-x-1/2
+                        w-[65%]
+                        h-[45px]
+                        rounded-full
+                        bg-cyan-400/[0.09]
+                        blur-[30px]
+                        pointer-events-none
+                    "
+                />
 
             </div>
 
+        </motion.div>
+
+
+        {/* =====================================================
+            FLOATING CAPTION
+        ===================================================== */}
+
+        <motion.div
+            initial={{
+                opacity: 0,
+                y: 10,
+            }}
+            whileInView={{
+                opacity: 1,
+                y: 0,
+            }}
+            viewport={{
+                once: true,
+            }}
+            transition={{
+                delay: 0.8,
+                duration: 0.6,
+            }}
+            className="
+                absolute
+                -bottom-2
+                left-1/2
+                -translate-x-1/2
+                whitespace-nowrap
+                text-[8px]
+                uppercase
+                tracking-[0.32em]
+                text-cyan-400/45
+            "
+        >
+            SmartDELHI Intelligence Core
+        </motion.div>
+
+    </motion.div>
+
+</div>
           </main>
 
           {/* =================================================
@@ -1297,17 +1732,17 @@ export default function Home() {
                 </div>
 
               </div>
-           
+
 
             </div>
 
           </div>
           {/* civic index */}
           <DelhiCivicIndex />
- {/*delhi imaage galary*/}
-            <DelhiGallery />
-            {/* review section  */}
-           <ReviewSection />
+          {/*delhi imaage galary*/}
+          <DelhiGallery />
+          {/* review section  */}
+          <ReviewSection />
         </section>
 
       </div>

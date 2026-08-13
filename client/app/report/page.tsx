@@ -1,5 +1,5 @@
 "use client";
-
+import WasteIntelligence from "@/components/reports/WasteIntelligence";
 import { motion } from "framer-motion";
 import {
   ArrowUpRight,
@@ -1166,9 +1166,278 @@ export default function ReportPage() {
 
     </div>
 
+
   </div>
+{/* =========================================================
+    PREMIUM CIVIC REPORT SHOWCASE
+========================================================= */}
+
+<section className="relative z-10 py-24">
+    <div className="max-w-7xl mx-auto px-6">
+
+        <motion.div
+            initial={{ opacity: 0, y: 35 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="relative overflow-hidden rounded-[32px] border border-cyan-400/15 bg-[#050b14]/90 backdrop-blur-2xl shadow-[0_30px_100px_rgba(0,0,0,0.55)]"
+        >
+
+            {/* Ambient glow */}
+            <div className="absolute -top-32 -left-32 w-80 h-80 rounded-full bg-cyan-500/10 blur-[100px]" />
+            <div className="absolute -bottom-40 right-0 w-96 h-96 rounded-full bg-blue-600/10 blur-[120px]" />
+
+            <div className="relative grid lg:grid-cols-[1.25fr_0.75fr] gap-0">
+
+                {/* =================================================
+                    LEFT — REPORT IMAGE
+                ================================================= */}
+
+                <div className="relative p-5 md:p-7 lg:p-8">
+
+                    <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-[#07101d] shadow-[0_25px_80px_rgba(0,0,0,0.55)]">
+
+                        {/* Top bar */}
+                        <div className="absolute top-0 left-0 right-0 z-20 h-12 px-5 flex items-center justify-between bg-gradient-to-b from-black/70 to-transparent">
+
+                            <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-red-400" />
+                                <span className="w-2 h-2 rounded-full bg-yellow-400" />
+                                <span className="w-2 h-2 rounded-full bg-green-400" />
+                            </div>
+
+                            <span className="text-[9px] uppercase tracking-[0.3em] text-cyan-300/70">
+                                SmartDELHI / Civic Report
+                            </span>
+
+                        </div>
+
+                        {/* Report image */}
+                        <motion.img
+                            src="/images/reports/delhi-waste-report.png"
+                            alt="SmartDELHI civic waste management report"
+                            initial={{ scale: 1.04 }}
+                            whileInView={{ scale: 1 }}
+                            whileHover={{ scale: 1.025 }}
+                            transition={{
+                                duration: 1.2,
+                                ease: "easeOut",
+                            }}
+                            className="w-full aspect-[16/10] object-cover"
+                        />
+
+                        {/* Glass overlay */}
+                        <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-cyan-500/[0.08] via-transparent to-blue-500/[0.08]" />
+
+                        {/* Scan line */}
+                        <motion.div
+                            animate={{ y: ["0%", "1000%"] }}
+                            transition={{
+                                duration: 5,
+                                repeat: Infinity,
+                                ease: "linear",
+                            }}
+                            className="absolute left-0 right-0 top-0 h-px bg-cyan-300/40 shadow-[0_0_18px_rgba(34,211,238,0.8)] pointer-events-none"
+                        />
+
+                    </div>
+
+                    {/* Caption */}
+                    <div className="mt-5 flex items-center justify-between">
+
+                        <div>
+                            <p className="text-xs text-cyan-400 uppercase tracking-[0.25em]">
+                                Delhi Civic Intelligence
+                            </p>
+
+                            <h3 className="mt-1 text-lg font-semibold text-white">
+                                Waste & Recycling Performance
+                            </h3>
+                        </div>
+
+                        <div className="hidden sm:flex items-center gap-2 text-[10px] text-emerald-400 uppercase tracking-widest">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            Live Analytics
+                        </div>
+
+                    </div>
+
+                </div>
 
 
+                {/* =================================================
+                    RIGHT — INTELLIGENCE METRICS
+                ================================================= */}
+
+                <div className="relative p-7 md:p-9 lg:border-l border-white/10 flex flex-col justify-center">
+
+                    <div className="text-cyan-400 text-[10px] uppercase tracking-[0.3em]">
+                        Report Intelligence
+                    </div>
+
+                    <h2 className="mt-4 text-3xl md:text-4xl font-bold tracking-tight">
+                        Delhi is becoming
+                        <span className="block text-cyan-400">
+                            smarter & cleaner.
+                        </span>
+                    </h2>
+
+                    <p className="mt-4 text-sm text-gray-500 leading-7">
+                        AI-powered civic analytics transform complaint,
+                        waste and ward-level data into measurable city
+                        intelligence.
+                    </p>
+
+
+                    {/* Metrics */}
+
+                    <div className="mt-8 space-y-5">
+
+                        {/* Metric 1 */}
+                        <div>
+                            <div className="flex items-end justify-between mb-2">
+                                <span className="text-xs text-gray-400">
+                                    Waste Recycled
+                                </span>
+
+                                <span className="text-sm font-bold text-cyan-300">
+                                    68%
+                                </span>
+                            </div>
+
+                            <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                                <motion.div
+                                    initial={{ width: 0 }}
+                                    whileInView={{ width: "68%" }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 1.2 }}
+                                    className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500"
+                                />
+                            </div>
+                        </div>
+
+
+                        {/* Metric 2 */}
+                        <div>
+                            <div className="flex items-end justify-between mb-2">
+                                <span className="text-xs text-gray-400">
+                                    Complaints Resolved
+                                </span>
+
+                                <span className="text-sm font-bold text-emerald-300">
+                                    84%
+                                </span>
+                            </div>
+
+                            <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                                <motion.div
+                                    initial={{ width: 0 }}
+                                    whileInView={{ width: "84%" }}
+                                    viewport={{ once: true }}
+                                    transition={{
+                                        duration: 1.2,
+                                        delay: 0.15,
+                                    }}
+                                    className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-400"
+                                />
+                            </div>
+                        </div>
+
+
+                        {/* Metric 3 */}
+                        <div>
+                            <div className="flex items-end justify-between mb-2">
+                                <span className="text-xs text-gray-400">
+                                    AI Detection Accuracy
+                                </span>
+
+                                <span className="text-sm font-bold text-blue-300">
+                                    91%
+                                </span>
+                            </div>
+
+                            <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                                <motion.div
+                                    initial={{ width: 0 }}
+                                    whileInView={{ width: "91%" }}
+                                    viewport={{ once: true }}
+                                    transition={{
+                                        duration: 1.2,
+                                        delay: 0.3,
+                                    }}
+                                    className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-400"
+                                />
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                    {/* Mini analytics cards */}
+
+                    <div className="grid grid-cols-2 gap-3 mt-8">
+
+                        <div className="rounded-2xl border border-white/8 bg-white/[0.025] p-4">
+                            <p className="text-[9px] uppercase tracking-widest text-gray-500">
+                                Recycled
+                            </p>
+
+                            <p className="mt-2 text-xl font-bold text-white">
+                                2.8M
+                            </p>
+
+                            <p className="mt-1 text-[10px] text-emerald-400">
+                                +12.4% this year
+                            </p>
+                        </div>
+
+                        <div className="rounded-2xl border border-white/8 bg-white/[0.025] p-4">
+                            <p className="text-[9px] uppercase tracking-widest text-gray-500">
+                                Wards
+                            </p>
+
+                            <p className="mt-2 text-xl font-bold text-white">
+                                250+
+                            </p>
+
+                            <p className="mt-1 text-[10px] text-cyan-400">
+                                Connected
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    {/* Bottom status */}
+
+                    <div className="mt-7 pt-5 border-t border-white/8 flex items-center justify-between">
+
+                        <div className="flex items-center gap-2">
+                            <span className="relative flex h-2 w-2">
+                                <span className="absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75 animate-ping" />
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-400" />
+                            </span>
+
+                            <span className="text-[10px] text-gray-500 uppercase tracking-widest">
+                                Intelligence engine active
+                            </span>
+                        </div>
+
+                        <span className="text-[10px] font-mono text-cyan-400/60">
+                            SD-AI / 01
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </motion.div>
+
+    </div>
+</section>
+<WasteIntelligence />
   {/* ================= DISCLAIMER ================= */}
 
   <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-amber-400/10 bg-amber-400/[0.025] p-5 md:flex-row md:items-center">
