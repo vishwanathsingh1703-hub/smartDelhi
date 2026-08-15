@@ -29,7 +29,6 @@ type HeatmapComplaint = {
 
 declare global {
   interface Window {
-    google: any;
     initGoogleMap?: () => void;
   }
 }
@@ -338,7 +337,7 @@ export default function CitizenHeatmapPage() {
           const {
             Map,
             Circle,
-            LatLngBounds,
+            
           } =
             await window.google.maps.importLibrary(
               "maps"
@@ -415,7 +414,7 @@ export default function CitizenHeatmapPage() {
           (
             map as any
           ).__LatLngBounds =
-            LatLngBounds;
+           
 
           (
             map as any

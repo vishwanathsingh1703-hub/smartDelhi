@@ -1,17 +1,11 @@
-import { NextResponse } from 'next/server';
+import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 
-export async function POST() {
-  const response = NextResponse.json({ message: 'Logged out successfully' }, { status: 200 });
-  
-  response.cookies.set({
-    name: 'token',
-    value: '',
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 0,
-  });
+export async function POST(request: Request) {
+  // 1. Session clear ya token delete ka logic
+  const cookieStore = await cookies();
+  cookieStore.delete('token'); // aapke token ka naam
 
-  return response;
+  // 2. Main Dashboard par redirect kar dein
+  redirect('/dashboard'); // ya jo bhi aapka main dashboard route ho (e.g. '/')
 }

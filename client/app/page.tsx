@@ -9,6 +9,15 @@ import dynamic from "next/dynamic";
 import ReviewSection from "@/components/ReviewSection";
 import DelhiGallery from "@/components/DelhiGallery";
 import DelhiCivicIndex from "@/components/DelhiCivicIndex";
+import {
+  ArrowUpRight,
+  Mail,
+  MapPin,
+  Phone,
+  ShieldCheck,
+  
+} from "lucide-react";
+
 const citiesList = [
   "Smart Delhi",
   "Smart Citizen",
@@ -348,7 +357,7 @@ export default function Home() {
               </a>
 
               <a
-                href="#"
+                href="/auth"
                 className="hover:text-blue-400 transition"
               >
                 Complains
@@ -1743,6 +1752,437 @@ export default function Home() {
           <DelhiGallery />
           {/* review section  */}
           <ReviewSection />
+          {/* =========================================================
+    SMARTDELHI — PREMIUM DASHBOARD FOOTER
+========================================================= */}
+
+<footer className="relative mt-24 overflow-hidden border-t border-white/[0.08] bg-[#030814]">
+
+  {/* Ambient glow */}
+  <div className="pointer-events-none absolute -top-32 left-[15%] h-72 w-72 rounded-full bg-cyan-500/[0.06] blur-[110px]" />
+  <div className="pointer-events-none absolute -bottom-32 right-[10%] h-80 w-80 rounded-full bg-blue-600/[0.07] blur-[120px]" />
+
+  {/* Subtle grid */}
+  <div
+    className="
+      pointer-events-none
+      absolute
+      inset-0
+      opacity-[0.025]
+      bg-[linear-gradient(rgba(56,189,248,0.8)_1px,transparent_1px),linear-gradient(90deg,rgba(56,189,248,0.8)_1px,transparent_1px)]
+      bg-[size:42px_42px]
+    "
+  />
+
+  <div className="relative mx-auto max-w-7xl px-6 py-16 lg:px-8">
+
+    {/* =====================================================
+        TOP BRAND ROW
+    ===================================================== */}
+
+    <div className="mb-14 flex flex-col gap-8 border-b border-white/[0.07] pb-10 lg:flex-row lg:items-end lg:justify-between">
+
+      <div className="max-w-xl">
+
+        <div className="flex items-center gap-3">
+
+          {/* Logo */}
+          <div
+            className="
+              flex
+              h-11
+              w-11
+              items-center
+              justify-center
+              rounded-2xl
+              border
+              border-cyan-400/20
+              bg-gradient-to-br
+              from-cyan-400/10
+              to-blue-600/10
+              shadow-[0_0_30px_rgba(34,211,238,0.08)]
+            "
+          >
+            <span className="text-lg font-black tracking-tight text-cyan-300">
+              SD
+            </span>
+          </div>
+
+          <div>
+            <h2 className="text-xl font-bold tracking-tight text-white">
+              Smart<span className="text-cyan-400">DELHI</span>
+            </h2>
+
+            <p className="mt-0.5 text-[10px] uppercase tracking-[0.25em] text-slate-500">
+              Digital Civic Intelligence
+            </p>
+          </div>
+
+        </div>
+
+        <p className="mt-6 max-w-lg text-sm leading-7 text-slate-500">
+          A unified digital platform designed to connect citizens,
+          civic workers and administration through intelligent
+          complaint management and real-time civic insights.
+        </p>
+
+      </div>
+
+      {/* System status */}
+
+      <div
+        className="
+          inline-flex
+          w-fit
+          items-center
+          gap-3
+          rounded-full
+          border
+          border-emerald-400/15
+          bg-emerald-400/[0.04]
+          px-4
+          py-2.5
+        "
+      >
+
+        <span className="relative flex h-2 w-2">
+          <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/60" />
+          <span className="relative h-2 w-2 rounded-full bg-emerald-400" />
+        </span>
+
+        <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-emerald-400">
+          Civic Systems Operational
+        </span>
+
+      </div>
+
+    </div>
+
+
+    {/* =====================================================
+        MAIN FOOTER GRID
+    ===================================================== */}
+
+    <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-5 lg:gap-8">
+
+      {/* -----------------------------------------------------
+          SMARTDELHI
+      ----------------------------------------------------- */}
+
+      <div className="lg:col-span-1">
+
+        <h3 className="mb-6 inline-block border-b border-cyan-400/40 pb-2 text-sm font-semibold text-white">
+          SmartDELHI
+        </h3>
+
+        <ul className="space-y-3.5">
+
+          <li>
+            <Link
+              href="/"
+              className="group flex items-center gap-1.5 text-sm text-slate-400 transition-colors duration-300 hover:text-cyan-300"
+            >
+              Home
+              <ArrowUpRight className="h-3 w-3 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100" />
+            </Link>
+          </li>
+
+          <li>
+            <Link
+              href="/about-us"
+              className="group flex items-center gap-1.5 text-sm text-slate-400 transition-colors duration-300 hover:text-cyan-300"
+            >
+              About Us
+              <ArrowUpRight className="h-3 w-3 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100" />
+            </Link>
+          </li>
+
+          <li>
+            <Link
+              href="/contact"
+              className="group flex items-center gap-1.5 text-sm text-slate-400 transition-colors duration-300 hover:text-cyan-300"
+            >
+              Contact
+              <ArrowUpRight className="h-3 w-3 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100" />
+            </Link>
+          </li>
+
+        </ul>
+
+      </div>
+
+
+      {/* -----------------------------------------------------
+          CIVIC SERVICES
+      ----------------------------------------------------- */}
+
+      <div>
+
+        <h3 className="mb-6 inline-block border-b border-cyan-400/40 pb-2 text-sm font-semibold text-white">
+          Civic Services
+        </h3>
+
+        <ul className="space-y-3.5">
+
+          <li>
+            <Link
+              href="/auth"
+              className="text-sm text-slate-400 transition-colors duration-300 hover:text-cyan-300"
+            >
+              Report a Complaint
+            </Link>
+          </li>
+
+          <li>
+            <Link
+              href="/auth"
+              className="text-sm text-slate-400 transition-colors duration-300 hover:text-cyan-300"
+            >
+              Track Complaint
+            </Link>
+          </li>
+
+          <li>
+            <Link
+              href="/auth"
+              className="text-sm text-slate-400 transition-colors duration-300 hover:text-cyan-300"
+            >
+              Citizen Dashboard
+            </Link>
+          </li>
+
+          <li>
+            <Link
+              href="/live-intelligence"
+              className="text-sm text-slate-400 transition-colors duration-300 hover:text-cyan-300"
+            >
+              Live Intelligence
+            </Link>
+          </li>
+
+        </ul>
+
+      </div>
+
+
+      {/* -----------------------------------------------------
+          PLATFORM
+      ----------------------------------------------------- */}
+
+      <div>
+
+        <h3 className="mb-6 inline-block border-b border-cyan-400/40 pb-2 text-sm font-semibold text-white">
+          Platform
+        </h3>
+
+        <ul className="space-y-3.5">
+
+          <li>
+            <Link
+              href="/reports"
+              className="text-sm text-slate-400 transition-colors duration-300 hover:text-cyan-300"
+            >
+              Reports & Analytics
+            </Link>
+          </li>
+
+          <li>
+            <Link
+              href="/auth"
+              className="text-sm text-slate-400 transition-colors duration-300 hover:text-cyan-300"
+            >
+              Ward Intelligence
+            </Link>
+          </li>
+
+          <li>
+            <Link
+              href="/auth"
+              className="text-sm text-slate-400 transition-colors duration-300 hover:text-cyan-300"
+            >
+              Delhi Civic Map
+            </Link>
+          </li>
+
+          <li>
+            <Link
+              href="/auth"
+              className="text-sm text-slate-400 transition-colors duration-300 hover:text-cyan-300"
+            >
+              Notifications
+            </Link>
+          </li>
+
+        </ul>
+
+      </div>
+
+
+      {/* -----------------------------------------------------
+          CONNECT
+      ----------------------------------------------------- */}
+
+    <div>
+
+  <h3 className="mb-6 inline-block border-b border-cyan-400/40 pb-2 text-sm font-semibold text-white">
+    Connect
+  </h3>
+
+  <ul className="space-y-4">
+
+    <li>
+      <a
+        href="www.linkedin.com/in/vishwanath-s-19858b333"
+        className="group flex items-center gap-3 text-sm text-slate-400 transition-colors duration-300 hover:text-cyan-300"
+      >
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-[11px] font-bold text-slate-400 transition-all group-hover:border-cyan-400/30 group-hover:bg-cyan-400/10 group-hover:text-cyan-300">
+          in
+        </span>
+        LinkedIn
+      </a>
+    </li>
+
+    <li>
+      <a
+        href=""
+        className="group flex items-center gap-3 text-sm text-slate-400 transition-colors duration-300 hover:text-cyan-300"
+      >
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-[13px] font-semibold text-slate-400 transition-all group-hover:border-cyan-400/30 group-hover:bg-cyan-400/10 group-hover:text-cyan-300">
+          ◎
+        </span>
+        Instagram
+      </a>
+    </li>
+
+    <li>
+      <a
+        href="https://github.com/vishwanathsingh1703-hub?tab=overview&from=2026-08-01&to=2026-08-14"
+        className="group flex items-center gap-3 text-sm text-slate-400 transition-colors duration-300 hover:text-cyan-300"
+      >
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-[11px] font-bold text-slate-400 transition-all group-hover:border-cyan-400/30 group-hover:bg-cyan-400/10 group-hover:text-cyan-300">
+          GH
+        </span>
+        GitHub
+      </a>
+    </li>
+
+  </ul>
+
+</div>
+
+
+      {/* -----------------------------------------------------
+          DELHI CIVIC OFFICE
+      ----------------------------------------------------- */}
+
+      <div>
+
+        <h3 className="mb-6 inline-block border-b border-cyan-400/40 pb-2 text-sm font-semibold text-white">
+          Delhi Civic Network
+        </h3>
+
+        <div className="space-y-5">
+
+          <div className="flex gap-3">
+
+            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-cyan-400" />
+
+            <div>
+              <p className="text-sm font-medium text-slate-300">
+                Delhi, India
+              </p>
+
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                National Capital Territory (NCR)
+              </p>
+            </div>
+
+          </div>
+
+
+          <div className="flex gap-3">
+
+            <Phone className="mt-0.5 h-4 w-4 shrink-0 text-cyan-400" />
+
+            <div>
+
+              <p className="text-sm font-medium text-slate-300">
+               +91 8957403462
+              </p>
+
+              <p className="mt-1 text-xs text-slate-500">
+                Available through SmartDELHI
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div className="flex gap-3">
+
+            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+
+            <div>
+
+              <p className="text-sm font-medium text-slate-300">
+                Secure Platform
+              </p>
+
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                Protected civic data infrastructure
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    {/* =====================================================
+        BOTTOM BAR
+    ===================================================== */}
+
+    <div className="mt-14 flex flex-col gap-5 border-t border-white/[0.07] pt-7 md:flex-row md:items-center md:justify-between">
+
+      <p className="text-xs text-slate-600">
+        © {new Date().getFullYear()} SmartDELHI. Built for a smarter Delhi.
+      </p>
+
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+
+        <Link
+          href="/privacy"
+          className="text-xs text-slate-600 transition-colors hover:text-cyan-400"
+        >
+          Privacy
+        </Link>
+
+        <Link
+          href="/terms"
+          className="text-xs text-slate-600 transition-colors hover:text-cyan-400"
+        >
+          Terms
+        </Link>
+
+        <span className="hidden h-3 w-px bg-white/10 sm:block" />
+
+        <span className="flex items-center gap-2 text-xs text-slate-600">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]" />
+          Platform Online
+        </span>
+
+      </div>
+
+    </div>
+
+  </div>
+</footer>
         </section>
 
       </div>

@@ -635,7 +635,18 @@ function AdminDashboard() {
                     Sync
                   </span>
                 </button>
-
+ <form
+              action="/api/auth/logout"
+              method="POST"
+            >
+              <button
+                type="submit"
+                className="group flex items-center gap-2 rounded-xl border border-rose-500/20 bg-rose-500/[0.06] px-3 py-2 text-xs font-semibold text-rose-300 transition hover:border-rose-400/40 hover:bg-rose-500/10"
+              >
+                <LogOut className="h-3.5 w-3.5 transition group-hover:-translate-x-0.5" />
+                Logout
+              </button>
+            </form>
                 <div className="hidden h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400/20 to-blue-500/10 sm:flex">
                   <Shield className="h-4 w-4 text-cyan-300" />
                 </div>

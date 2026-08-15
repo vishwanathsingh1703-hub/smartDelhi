@@ -1,19 +1,21 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { loginSchema } from "@/lib/validations";
 import { signToken } from "@/lib/jwt";
-import bcrypt from "bcryptjs";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    const result = loginSchema.safeParse(body);
+    const {
+      credential,
+      role,
+      adminPassword,
+    } = body;
 
-    if (!result.success) {
+    if (!credential) {
       return NextResponse.json(
         {
-          error: "Invalid email or password format.",
+          error: "Google credential is missing.",
         },
         {
           status: 400,
@@ -21,28 +23,24 @@ export async function POST(request: Request) {
       );
     }
 
-    const {
-      email,
-      password,
-    } = result.data;
-
-    const requestedRole = body.role;
-    const adminPassword = body.adminPassword;
-
     /* =====================================================
-       USER
+       VERIFY GOOGLE ID TOKEN
     ===================================================== */
 
-    const user = await prisma.user.findUnique({
-      where: {
-        email,
-      },
-    });
+    const googleResponse = await fetch(
+      `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(
+        credential
+      )}`,
+      {
+        cache: "no-store",
+      }
+    );
 
-    if (!user) {
+    if (!googleResponse.ok) {
       return NextResponse.json(
         {
-          error: "Invalid email or password.",
+          error:
+            "Google verification failed.",
         },
         {
           status: 401,
@@ -50,9 +48,79 @@ export async function POST(request: Request) {
       );
     }
 
+    const googleUser = await googleResponse.json();
+
+    const googleClientId =
+      process.env.GOOGLE_CLIENT_ID;
+
+    if (
+      !googleClientId ||
+      googleUser.aud !== googleClientId
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Invalid Google application.",
+        },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    if (
+      googleUser.email_verified !== "true"
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Your Google email is not verified.",
+        },
+        {
+          status: 403,
+        }
+      );
+    }
+
+    const email =
+      typeof googleUser.email === "string"
+        ? googleUser.email.toLowerCase()
+        : "";
+
+    if (!email) {
+      return NextResponse.json(
+        {
+          error:
+            "Google account email could not be read.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
     /* =====================================================
-       ACCOUNT STATUS
+       EXISTING USER
     ===================================================== */
+
+    const user =
+      await prisma.user.findUnique({
+        where: {
+          email,
+        },
+      });
+
+    if (!user) {
+      return NextResponse.json(
+        {
+          error:
+            "No SmartDELHI account exists with this Google email. Please register first.",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
 
     if (!user.isActive) {
       return NextResponse.json(
@@ -71,8 +139,8 @@ export async function POST(request: Request) {
     ===================================================== */
 
     if (
-      requestedRole &&
-      requestedRole !== user.role
+      role &&
+      role !== user.role
     ) {
       return NextResponse.json(
         {
@@ -86,28 +154,7 @@ export async function POST(request: Request) {
     }
 
     /* =====================================================
-       NORMAL PASSWORD
-    ===================================================== */
-
-    const isPasswordValid =
-      await bcrypt.compare(
-        password,
-        user.passwordHash
-      );
-
-    if (!isPasswordValid) {
-      return NextResponse.json(
-        {
-          error: "Invalid email or password.",
-        },
-        {
-          status: 401,
-        }
-      );
-    }
-
-    /* =====================================================
-       ADMIN SECURITY PASSWORD
+       ADMIN SECURITY
     ===================================================== */
 
     if (user.role === "ADMIN") {
@@ -115,10 +162,6 @@ export async function POST(request: Request) {
         process.env.ADMIN_LOGIN_PASSWORD;
 
       if (!configuredAdminPassword) {
-        console.error(
-          "ADMIN_LOGIN_PASSWORD is missing."
-        );
-
         return NextResponse.json(
           {
             error:
@@ -132,7 +175,8 @@ export async function POST(request: Request) {
 
       if (
         !adminPassword ||
-        adminPassword !== configuredAdminPassword
+        adminPassword !==
+          configuredAdminPassword
       ) {
         return NextResponse.json(
           {
@@ -162,7 +206,8 @@ export async function POST(request: Request) {
 
     const response = NextResponse.json(
       {
-        message: "Login successful",
+        message:
+          "Google verification successful.",
 
         user: {
           id: user.id,
@@ -183,10 +228,6 @@ export async function POST(request: Request) {
       }
     );
 
-    /* =====================================================
-       AUTH COOKIE
-    ===================================================== */
-
     response.cookies.set({
       name: "token",
       value: token,
@@ -200,11 +241,15 @@ export async function POST(request: Request) {
 
     return response;
   } catch (error) {
-    console.error("Login error:", error);
+    console.error(
+      "Google authentication error:",
+      error
+    );
 
     return NextResponse.json(
       {
-        error: "Internal server error",
+        error:
+          "Google authentication failed.",
       },
       {
         status: 500,

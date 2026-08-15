@@ -9,11 +9,7 @@ import {
   Maximize2,
 } from "lucide-react";
 
-declare global {
-  interface Window {
-    google: any;
-  }
-}
+
 
 interface ComplaintLocation {
   id: string;
@@ -255,7 +251,7 @@ export default function CitizenHeatmapBlock() {
       if (!response.ok) {
         throw new Error(
           data?.error ||
-            "Failed to load complaints."
+          "Failed to load complaints."
         );
       }
 
@@ -263,8 +259,8 @@ export default function CitizenHeatmapBlock() {
         Array.isArray(data)
           ? data
           : Array.isArray(data?.complaints)
-          ? data.complaints
-          : [];
+            ? data.complaints
+            : [];
 
       /*
        * Explicit ComplaintLocation-compatible
@@ -399,7 +395,7 @@ export default function CitizenHeatmapBlock() {
           /*
            * Create map
            */
-
+          if (!mapRef.current) return;
           mapInstanceRef.current =
             new Map(
               mapRef.current,
@@ -413,19 +409,19 @@ export default function CitizenHeatmapBlock() {
                   true,
 
                 mapTypeControlOptions:
-                  {
-                    style:
-                      window.google
-                        .maps
-                        .MapTypeControlStyle
-                        .HORIZONTAL_BAR,
+                {
+                  style:
+                    window.google
+                      .maps
+                      .MapTypeControlStyle
+                      .HORIZONTAL_BAR,
 
-                    position:
-                      window.google
-                        .maps
-                        .ControlPosition
-                        .TOP_LEFT,
-                  },
+                  position:
+                    window.google
+                      .maps
+                      .ControlPosition
+                      .TOP_LEFT,
+                },
 
                 streetViewControl:
                   false,
@@ -434,13 +430,13 @@ export default function CitizenHeatmapBlock() {
                   true,
 
                 fullscreenControlOptions:
-                  {
-                    position:
-                      window.google
-                        .maps
-                        .ControlPosition
-                        .TOP_RIGHT,
-                  },
+                {
+                  position:
+                    window.google
+                      .maps
+                      .ControlPosition
+                      .TOP_RIGHT,
+                },
 
                 zoomControl: true,
 
@@ -514,13 +510,13 @@ export default function CitizenHeatmapBlock() {
         complaint: ComplaintLocation
       ) => {
         let markerColor =
-          "#38bdf8";
+          "#e79d2e";
 
         if (
           complaint.priority ===
-            "HIGH" ||
+          "HIGH" ||
           complaint.priority ===
-            "CRITICAL"
+          "CRITICAL"
         ) {
           markerColor =
             "#ef4444";
@@ -602,13 +598,13 @@ export default function CitizenHeatmapBlock() {
         const radius =
           complaint.priority ===
             "CRITICAL" ||
-          complaint.priority ===
+            complaint.priority ===
             "HIGH"
             ? 500
             : complaint.priority ===
               "MEDIUM"
-            ? 350
-            : 220;
+              ? 350
+              : 220;
 
         const circle =
           new window.google.maps.Circle(
@@ -717,15 +713,15 @@ export default function CitizenHeatmapBlock() {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const currentPosition =
-          {
-            lat:
-              position.coords
-                .latitude,
+        {
+          lat:
+            position.coords
+              .latitude,
 
-            lng:
-              position.coords
-                .longitude,
-          };
+          lng:
+            position.coords
+              .longitude,
+        };
 
         if (
           mapInstanceRef.current
@@ -841,11 +837,10 @@ export default function CitizenHeatmapBlock() {
           className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-medium text-gray-300 transition hover:bg-white/10 disabled:opacity-50"
         >
           <RefreshCw
-            className={`h-3.5 w-3.5 ${
-              loading
+            className={`h-3.5 w-3.5 ${loading
                 ? "animate-spin"
                 : ""
-            }`}
+              }`}
           />
 
           Refresh
